@@ -1,0 +1,3 @@
+strings -a -t x <libc> | grep "/bin/sh"
+leak puts so we can predict where is libc and then just add the binsh offset
+(sudo docker-compose up)
