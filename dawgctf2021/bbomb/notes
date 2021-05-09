@@ -1,0 +1,48 @@
+Pr3e7Y_57E4ltHy_Fl4g
+
+vim replace = :%s/search/replace/g
+(char *)function means function return char pointer
+Phase1 
+============================================================================
+Reverse the string in while loop
+============================================================================
+
+Phase2
+============================================================================
+Bitwise XOR on all the chars
+Reverse xor by xor char with 5
+Python3:
+ans = ""
+for i in "Dk52m6WZw@s6w0dIZh@2m5a":
+    ans += chr(ord(i) ^ 5)
+============================================================================
+
+Phase3
+============================================================================
+string to get = "_9~Jb0!=A`G!06qfc82'_20uf6`2%7
+
+Function2
+If 32 and below or equal to 127, stay the same
+If 80 and below, +47
+Else, -94 and +47
+
+Function1 Part2
+If 96 and below or 123 and above,stay the same
+If 109 and below, +13
+Else, -26 and +13
+
+Function1 Part1
+If 64  and below or 91 and below,stay the same
+If 77 and below, +13
+Else, -26 and +13
+============================================================================
+
+Phase 7
+============================================================================
+Conditions
+1st < 2nd < 3rd
+1st + 2nd + 3rd = 0x1fd
+values must be > 100
+input must pass phase5 test and ret q
+after shifting to right,must still pass phase5 test and must still be > 100
+============================================================================

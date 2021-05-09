@@ -1,0 +1,4 @@
+exploit is literally os.system("flag.txt")
+python2 input() changes input according to type
+if you type in 123 it would return and int, if you type in a variable it would return a variable
+so if you type in a function it would return a function and thus execute it
