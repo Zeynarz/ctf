@@ -37,12 +37,32 @@ If 77 and below, +13
 Else, -26 and +13
 ============================================================================
 
+Phase 5 
+===========================================================================
+make list of numbers that is odd
+make list of numbers that follow algorithm
+input / 2  >  var
+    if var % input == 0
+        gameOver
+    var += 2
+===========================================================================
+
+Phase 6
+===========================================================================
+Algorithm
+(input[n] << 4) | (input[n] >> 4)
+the program only takes one byte to xor with 100 (0x424 will become 0x24)
+Solution
+XOR 100 to reverse XOR 
+try numbers in for loop that satisfy the condition (rmb that before xor it makes the number only one byte)
+===========================================================================
+
 Phase 7
 ============================================================================
 Conditions
 1st < 2nd < 3rd
 1st + 2nd + 3rd = 0x1fd
 values must be > 100
-input must pass phase5 test and ret q
+input must pass phase5 test and ret 1
 after shifting to right,must still pass phase5 test and must still be > 100
 ============================================================================
