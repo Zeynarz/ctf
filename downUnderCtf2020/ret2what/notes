@@ -1,3 +1,6 @@
 strings -a -t x <libc> | grep "/bin/sh"
 leak puts so we can predict where is libc and then just add the binsh offset
+ubuntu sys call movaps needs rsp%16 == 0
 (sudo docker-compose up)
+had the wrong libc so cant execute remotely
+https://libc.blukat.me/?q=puts%3A9c0 Great tool
