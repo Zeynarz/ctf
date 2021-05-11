@@ -1,5 +1,13 @@
+Thought my original solution didnt work cause of time, but it didnt work cause I didnt receive input correctly
+rmb to run with python3 sol.py DEBUG
+Atleast got to learn multiprocessing 
+
+sol.py = normal solution that I wrote during the  ctf(that had a little flaw )
+sol2.py = rly overkill solution 
+
 Congrats! Here's your flag: DawgCTF{jU$T_l1k3_w3lc0me_w33k}\n LETS GO
 have to run a couple of times, luck kinda plays a role
+rly overkill program that is rly fast
 Sources:
 https://www.geeksforgeeks.org/multiprocessing-python-set-2/
 https://www.geeksforgeeks.org/python-program-for-how-to-check-if-a-given-number-is-fibonacci-number/
@@ -7,5 +15,4 @@ https://www.urbanpro.com/class-ix-x-tuition/fastest-way-how-to-check-if-a-number
 
 should have probably see https://stackoverflow.com/questions/295579/fastest-way-to-determine-if-an-integers-square-root-is-an-integer
 
-use python3 sol.py DEBUG to run
 tried to solve in C but my networking code was a mess and had a lot of seg faults
