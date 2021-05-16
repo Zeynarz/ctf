@@ -1,6 +1,6 @@
 format string exploit
 failed = leak libc(Using the info on the stack) -> overwrite ret to ret to main so we have more inputs -> overwrite second ret to popRdi -> write binsh onto stack -> write system onto stack
-leak addresses -> popRdi part1 - > rewrite the variable to 0 -> popRdi part2 -> repeat
+leak addresses -> rewrite Var -> setup ret2libc -> rewriteVar -> shell
 maybe need set stack
 8th format argument is own input
 after some fiddling,found out that 3rd format arg prints out readAddress+18 19th format arg is libc_main + 243
@@ -8,5 +8,5 @@ cant overwrite got cause full relro is active
 cant fit all of the exploit in three inputs so gotta return back to the function
 need to follow order so it doesnt messes up the bytes infront 
 IMPORTANT = maximum input is 64 chars
-cant write negative numbers cause its too big
+movaps need rsp/16 
 0xffff = 65535 so 5 spaces
