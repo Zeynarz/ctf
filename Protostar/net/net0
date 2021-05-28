@@ -1,0 +1,3 @@
+echo -e "`cat -`" | nc 127.0.0.1 2999
+use python struct.pack("I",) to convert number,type the input in the terminal then control-D
+
