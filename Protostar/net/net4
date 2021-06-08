@@ -1,0 +1,6 @@
+Net4 is probably just used for the developers to test the networking stuff cause
+run() in net4 is literally just
+0x0804975a <run+0>:     push   ebp
+0x0804975b <run+1>:     mov    ebp,esp
+0x0804975d <run+3>:     pop    ebp
+0x0804975e <run+4>:     ret  
