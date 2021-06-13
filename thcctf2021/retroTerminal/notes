@@ -1,0 +1,5 @@
+r("#f").innerHTML = atob("VEhDb24yMXt1bmRlci15b3VyLW5vc2V9").replace(/./g, "*")
+^
+|
+Crucial line (in the webpage this looks like a password too cause of the replace so flag is prob the string)
+atob decrypts base 64 so just decrypt the string and you got the flag

@@ -1,0 +1,12 @@
+Learned some stuff bout regex this ctf while doing the retro console chall so decided to give this a try
+Passwd = /^a+/^athc1234oe🍕exexexrexexexex£t€t
+Requirements:
+/thc/ string must have thc
+/\d{4}/ string must have 4 digits together
+/^\/\^/ string needs start with /^
+/[🍕-🍺]/ string must have something in this range 
+/£.€.$/  string needs to end with £(any char)€(any char)
+/^(...).+\1/ first 3 char + any char + "+" + first 3 char again
+/(?=[lo][ve])[co][de]/ must have oe in string
+/(?1)(reg|ex|are|hard)(?=\1)..(?<=r.{6})\1/ string must have exexexrexexexex1 
+/(?<=[help])(x(?(?=-..-)(-->)|(<-)))(?(2)\2|\1)->o/.

@@ -1,0 +1,20 @@
+main address = 0x5555555554bf
+
+function 1 = changes index of numbers, turns 123456 to 425316 
+function 2 = sha1 the converted Number
+function 3 = scrypt() (used to delay the program so can't bruteforce,most probably this function is used to encrypt the flag so we can't use gdb to read it)
+
+crypto_scrypt(input,6,probKey,0x10,0x200000,8,1,local_48,0x30);
+int libscrypt_scrypt(const uint8_t *passwd, size_t passwdlen,
+        const uint8_t *salt, size_t saltlen, uint64_t N, uint32_t r,
+        uint32_t p, /*@out@*/ uint8_t *buf, size_t buflen);
+
+0xd67aad07d4eeffd3 <- string to get (found with gdb)
+d6 7a ad 07 d4 ee ff d3
+d3 ff ee d4 07 ad 7a d6 0xd3ffeed407ad7ad6
+425316 sha1 -> 00AA79371961B1A9
+gdb shows   -> 0xa9b161193779aa00  
+               reversed 
+
+the strncmp doesnt check with the result created by crypto_scrypt
+For function 1, if you want to get 123456,you have to enter 524136(counter the algorithm)
