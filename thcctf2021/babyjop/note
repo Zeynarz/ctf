@@ -1,0 +1,5 @@
+ret to read with rdi being rly big so that you can input much more bytes
+pivot the stack to content then call mprotect so that content is executable
+return from mprotect to shellcode in content
+
+Rsi is pointing at content during the jmp rdi
