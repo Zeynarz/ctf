@@ -1,0 +1,16 @@
+Pext instruction
+0xb0bababa - 10110000101110101011101010111010 src
+0x41414141 - 01000001010000010100000101000001 mask
+                                       000000
+                                       
+0xb0bababa - 10110000101110101011101010111010 src
+0xe2bcdd55 - 11100010101111001101110101010101 mask
+0x57ac4    -              1010111101011000100 dest                              
+
+src        - ?
+0xc6       -                         11000110 src
+0xdeadbeef - 11011110101011011011111011101111 mask
+0x66       -                          1100110 dest (wanted)
+
+Bswap instruction
+Little Endian to Big Endian / Big Endian to Little Endian
