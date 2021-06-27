@@ -1,0 +1,6 @@
+https://www.voidsecurity.in/2013/07/some-gadget-sequence-for-x8664-rop.html
+https://ir0nstone.gitbook.io/notes/types/stack/shellcode
+^^^
+good articles about ret2csu
+
+setup r14,r15 etc -> setup rdx and call init (using pointer in dynamic section) -> continue with libc csu instructions until reach ret -> ret to popRdi and setup args -> ret to ret2win
