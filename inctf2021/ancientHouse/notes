@@ -1,0 +1,143 @@
+heap chall with jemalloc
+
+jemalloc 
+-------------------
+jemalloc isnt last in first out
+
+
+exploit ideas
+-------------
+there prob isnt a UAF
+strlen can be exploited
+cant use negative numbers to exploit size 
+
+heap (pwntools aslr off) = 0x15555440a040 (objects)
+
+negative nums on id to get to other places?
+id -2 will get you to 0x7ffff7006040 (object)
+battle id 100 will seg fault
+
+Object
+                (str)                           (health)
+0x7ffff7006040: 0xf7007040      0x00007fff      0x0000000f      0x00000064
+0x7ffff7006050: 0x00000000      0x00000000      0x00000000      0x00000000
+                (size)
+
+merge with another one and you can get a heap overflow
+merge with dead id and another id will segfault
+
+
+DEBUG
+--------
+main = 0x555555555c05
+heap = 0x7ffff7006030
+addEnemy = 0x5555555555e9
+battle = 0x555555555b0d
+actualBattle = 0x5555555553d8
+merge = 0x555555555a09
+actualMerge = 0x55555555580d
+
+amountOfEnemies = 0x555555558038
+enemiesList = 0x555555558040
+
+
+main
+----------- 
+malloc(0x10) = heapPtr1 malloc(0x40) = heapPtr2
+heapPtr2 is placed on heapPtr1
+heapPtr1 is also namePtrPtr (which means rn heapPtr2 is where name is saved)
+
+malloc(0x10) returns 0x7ffff7006040 but malloc(0x40) returns 0x7ffff7007040
+
+0x7ffff7006030: 0xffffffff      0x0fffffff      0x0000000f      0x00000000
+0x7ffff7006040: 0xf7007040      0x00007fff      0x00000000      0x00000000
+
+0x7ffff7007030: 0x00000000      0x00000000      0x00000000      0x00000000
+0x7ffff7007040: 0x41414141      0x42424242      0x43434343      0x00000000
+
+0xf and 0x64 is also placed on the heap after inserting name
+0x7ffff7006030: 0xffffffff      0x0fffffff      0x0000000f      0x00000000
+0x7ffff7006040: 0xf7007040      0x00007fff      0x0000000f      0x00000064
+
+malloc(0x50) = heapPtr3; a function ptr is stored in heapPtr3
+heapPtr3[1] is argument to *heapPtr3
+heapPtr3 = 0x7ffff7008060
+
+0x7ffff7008050: 0x00000000      0x00000000      0x00000000      0x00000000
+0x7ffff7008060: 0x55555b82      0x00005555      0x00000000      0x00000000
+
+null byte to copy more?
+
+addEnemy
+-----------
+Maximum amount of enemies = 6
+malloc(0x18) = enemyObject = 0x7ffff7019040
+Insert enemyObject into enemies list (0x555555558040)
+
+request size and malloc size
+Maximum size = 0x69
+enemyName = malloc(size) = 0x7ffff7006050
+Save enemyName in enemy Object 
+
+Insert enemy,0x64(enemy health),enemyIndex/amountOfEnemies,enemySize into enemyObject
+
+TLDR; EnemyList holds enemy objects, enemyobject holds the enemyName,size,index and health
+
+
+EnemyList:
+0x555555558040: 0xf7019040      0x00007fff      0x00000000      0x00000000
+0x555555558050: 0x00000000      0x00000000      0x00000000      0x00000000
+
+EnemyObject:
+0x7ffff7019040: 0xf7006050      0x00007fff      0x00000064      0x00000000
+0x7ffff7019050: 0x0000000c      0x00000000      0x00000000      0x00000000
+
+EnemyName:
+0x7ffff7006050: 0x41414141      0x00000041      0x00000000      0x00000000
+0x7ffff7006060: 0x00000000      0x00000000      0x00000000      0x00000000
+
+
+battle
+----------
+read input for enemy id then check if enemyId exists
+prints name of enemy using enemylist(leak?)
+Reduces health of enemy by subtracting enemyHealth by *0x7ffff7006038 which is 15
+
+If enemyHealth < 0 
+you have the option to kill or spare the enemy
+If you decide to spare the enemy nothing happens
+
+If you decide to kill the enemy
+enemyObject and enemyName will be freed
+enemyObject will be removed from the enemyList
+(free enemyObject first then enemyName, will free overwrite some stuff so the program frees a wrong ptr?)
+
+
+merge
+--------
+Only have one chance to merge
+read input for 2 enemy ids to merge
+Check if enemyId1 and enemyId2 is valid (using amountOfEnemies)
+
+get health of both enemies and then perform some checks
+checks = not same id, not same health,newEnemySize < 0x60
+
+realloc enemyName with new size (enemyNameSize) 
+insert mergedEnemyName, mergedEnemyHealth and mergedEnemySize into enemyObject1
+
+EnemyObject:
+0x7ffff7019040: mergedEnemyName                   mergedEnemyHealth      0x00000000
+0x7ffff7019050: mergedEnemySize   0x00000000      0x00000000             0x00000000
+
+mergedEnemyName:
+0x7ffff7006050: 0x41414141      0x00000041      0x00000000      0x00000000
+0x7ffff7006060: 0x00000000      0x00000000      0x00000000      0x00000000
+
+
+the 2 names of the enemies will then be merged by adding them together
+"AAAA" + "BBBB" = "AAAABBBB"
+
+enemyName2 and enemyObject2 is then freed
+The id2 is also removed from the enemies list
+
+

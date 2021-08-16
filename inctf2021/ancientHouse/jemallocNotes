@@ -1,0 +1,11 @@
+From https://googleprojectzero.blogspot.com/2020/07/mms-exploit-part-3-constructing-primitives.html
+====================================
+with a clean state of the heap, two subsequent allocations of the same size are positioned next to each other.
+metadata is stored separately from the allocation itself, so an overflow of one chunk (or "region", as it's called in jemalloc) immediately overwrites the data of the adjacent one, with no metadata in between.
+allocations are grouped by size, so any two allocations can only be adjacent to each other if they fall into the same size "bin".
+a mechanism called "tcaches" improves locality by quickly reusing recently freed regions. This guarantees the predictability of some allocation patterns – for example, a malloc → free → malloc sequence of the same length will return the same address twice.
+====================================
+
+Additional sources:
+https://census-labs.com/media/shadow-infiltrate-2017.pdf
+https://vimeo.com/270454588 @13:52min
