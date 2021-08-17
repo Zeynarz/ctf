@@ -1,0 +1,69 @@
+CountArr = used to save how many nodes there are and how many offsets a node has
+Table = used to hold Nodes
+
+CountArr = [2,0,0]
+Table = [Node0,Node1,Node2]
+ Node1                         
+---------     
+|Offset1|      
+|   |   |  <- Linked List
+|Offset2| 
+|   |   |
+|Offset3|
+---------
+
+Addresses
+-----------
+Table = 0x555555559060
+CountArr = 0x5555555590c0
+
+
+TLDR;
+----------
+Add - add a node
+Remove - remove a node
+Link - link two nodes together (Node1 Offset0 Node1 Offset1)
+
+add
+-----------
+no check for negative size
+
+malloc a chunk using userSize
+malloc another chunk (size 0x18) to hold nextChunk,userSize and userchunk(we'll call this offsetLinkedList)
+
+0x555555559060 <Table>:         0x5555c030      0x00005555      0x00000000      0x00000000
+0x555555559070 <Table+16>:      0x00000000      0x00000000      0x00000000      0x00000000
+
+0x5555555590c0 <CountArr>:      0x00000002      0x00000000      0x00000000      0x00000000
+0x5555555590d0 <CountArr+16>:   0x00000000      0x00000000      0x00000000      0x00000000
+
+Offset1
+                (fd)                            (size)
+0x55555555c030: 0x5555c070      0x00005555      0x0000000c      0x00000000
+0x55555555c040: 0x5555c010      0x00005555      0x00000021      0x00000000
+                (userChunk)
+
+0x55555555c010: 0x64636261
+
+Offset2
+0x55555555c070: 0x00000000      0x00000000      0x0000000c      0x00000000
+0x55555555c080: 0x5555c050      0x00005555      0x00020f81      0x00000000
+
+0x55555555c050: 0x64636261
+view
+----------
+iterate through linked list and print out everything
+
+link
+----------
+(doesnt check if index is too big etc)
+Get indexTo and indexFrom
+
+Does some checks(if indexTo and indexFrom is the same and if the combined nodes/offsets is > 10)
+get to the final offset in the ToNode and insert a node into the table 
+Remove node from Table
+Fix new number in count arr 
+remove count of old node in count arr
+
+
+

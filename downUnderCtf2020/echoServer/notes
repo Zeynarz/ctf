@@ -10,3 +10,10 @@ need to follow order so it doesnt messes up the bytes infront
 IMPORTANT = maximum input is 64 chars
 movaps need rsp/16 
 0xffff = 65535 so 5 spaces
+
+
+============================================
+peeked a very VERY little at writeup 
+alr thought to make the variable negative but didnt think much of it and looked past it while solving chall
+always think more to the ideas that came up!!!!
+============================================
