@@ -7,7 +7,7 @@ void Link(void)
   undefined8 *heapToObject;
   
   printf("Enter to index: ");
-  indexTo = getInt();
+  indexTo = getInt(); //negative nums? doesnt work cause 64bit and int 32bit
   if (*(Table + indexTo * 8) == 0) {
     Err("Invalid index");
   }
@@ -36,5 +36,6 @@ void Link(void)
   *(CountArr + indexTo * 4) + *(CountArr + (ulong)indexFrom * 4);
   *(CountArr + indexFrom * 4) = 0;
   puts("Success");
+  ///////////////////
   return;
 }

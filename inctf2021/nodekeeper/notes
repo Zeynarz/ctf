@@ -1,15 +1,18 @@
-CountArr = used to save how many nodes there are and how many offsets a node has
+CountArr = used to save how many nodes there are and how many objects a node has
 Table = used to hold Nodes
 
 CountArr = [2,0,0]
+
+Node = object1Ptr
 Table = [Node0,Node1,Node2]
- Node1                         
----------     
-|Offset1|      
-|   |   |  <- Linked List
-|Offset2| 
+_________
+| Node1 |                        
 |   |   |
-|Offset3|
+|object1|      
+|   |   |  <- Linked List
+|object2| 
+|   |   |
+|object3|
 ---------
 
 Addresses
@@ -17,19 +20,45 @@ Addresses
 Table = 0x555555559060
 CountArr = 0x5555555590c0
 
+pwntools aslr of heap = 0x55555555d290
+double freed chunk = 0x55555555e3a0
+
+Exploit ideas
+----------------
+Overwrite object to get arbitary write and get leak 
+
+partial overwrite? (overwrite prev size of freed chunk)
+cant use heap consolidation to trick malloc tho cause max size is 0x59,so every freed chunk is either in tcache or fastbin
+
+why does malloc(0x18) return a chunk that has size 0x21
+0x18 + 0x10 = 0x28 
+
+cant leak heap using name (must press enter and null byte interfere) 
+
+Negative num as indexFrom?
+doesnt work cause 64bit and int 32bit
+
+When you unlink a chunk,the freed chunk still contains a ptr to fd, so UAF
+prob can lead to double free
+
+use 1337 cause 1337 just frees everything and doesnt check indexes
+
+Maximum chunks = 11
+Table aslr???
 
 TLDR;
 ----------
-Add - add a node
-Remove - remove a node
-Link - link two nodes together (Node1 Offset0 Node1 Offset1)
+Add - add an object
+Remove - remove an object
+Link - link two nodes together (Node1 object0 Node1 object1)
 
 add
 -----------
-no check for negative size
+negative size wont work
 
 malloc a chunk using userSize
-malloc another chunk (size 0x18) to hold nextChunk,userSize and userchunk(we'll call this offsetLinkedList)
+malloc another chunk (size 0x18) to hold fd,userSize and namechunk(we'll call this an object)
+malloc name chunk first then object chukn
 
 0x555555559060 <Table>:         0x5555c030      0x00005555      0x00000000      0x00000000
 0x555555559070 <Table+16>:      0x00000000      0x00000000      0x00000000      0x00000000
@@ -37,7 +66,7 @@ malloc another chunk (size 0x18) to hold nextChunk,userSize and userchunk(we'll 
 0x5555555590c0 <CountArr>:      0x00000002      0x00000000      0x00000000      0x00000000
 0x5555555590d0 <CountArr+16>:   0x00000000      0x00000000      0x00000000      0x00000000
 
-Offset1
+object1
                 (fd)                            (size)
 0x55555555c030: 0x5555c070      0x00005555      0x0000000c      0x00000000
 0x55555555c040: 0x5555c010      0x00005555      0x00000021      0x00000000
@@ -45,11 +74,54 @@ Offset1
 
 0x55555555c010: 0x64636261
 
-Offset2
+object2
 0x55555555c070: 0x00000000      0x00000000      0x0000000c      0x00000000
 0x55555555c080: 0x5555c050      0x00005555      0x00020f81      0x00000000
 
 0x55555555c050: 0x64636261
+
+
+Example:
+0x55555555d290: 0x00000000      0x00000000      0x00000021      0x00000000
+0x55555555d2a0: 0x41414141      0x41414141      0x41414141      0x41414141
+0x55555555d2b0: 0x41414141      0x00414141      0x00000021      0x00000000
+0x55555555d2c0: 0x00000000      0x00000000      0x00000018      0x00000000
+0x55555555d2d0: 0x5555d2a0      0x00005555      0x00020d31      0x00000000
+
+
+remove
+----------
+get nodeindex,objectindex (both also have checks, negative nums wont work)
+if objectIndex == 1337 (leet!!!)
+everything object in the node will be freed
+from top to bottom (object1 then object2)
+No UAF
+Table entry and count entry also removed
+
+If only one object and free objectIndex1,
+-table and count arr entry wiped off
+
+if not only one object and free objectIndex1,
+-table entry becomes fd
+-count entry becomes count-1
+
+if no namePtr will puts error msg
+
+after all this,
+the object will be freed and the name in object will also be freed
+fd and namePtr in object will be cleared too
+no UAF
+
+If not free objectIndex1
+will check for invalid indexes
+will iterate through linked list and go to the object BEFORE the object you want to free
+
+the fd of the object you want to free will now be the fd of the object BEFORE the object you want to free
+unlink!
+count arr entry = count arr entry - 1
+
+free namePtr in toFreeObject , then free toFreeObject
+
 view
 ----------
 iterate through linked list and print out everything
@@ -59,11 +131,43 @@ link
 (doesnt check if index is too big etc)
 Get indexTo and indexFrom
 
-Does some checks(if indexTo and indexFrom is the same and if the combined nodes/offsets is > 10)
-get to the final offset in the ToNode and insert a node into the table 
+Does some checks(if indexTo and indexFrom is the same and if the combined nodes/objects is > 10)
+get to the final object in the ToNode and insert a node into the table 
 Remove node from Table
 Fix new number in count arr 
 remove count of old node in count arr
+
+unlink
+----------
+get node and object index (no negative num checks)
+
+if choose to unlink object1
+    replace table entry to be object2 
+    count entry = count entry - 1
+
+if choose to unlink other objects
+    iterate through linked list and get ptr of object BEFORE the object we want to unlink 
+    object we want to unlink = toFreeObject
+    object before toFreeObject = ToFreeObjectBk
+
+    unlink toFreeObject (the fd of toFreeOBject is now the fd of ToFreeObjectBk)
+    count entry--
+
+if count arr of the node become 0,table entry is removed
+
+If want to keep the object
+    find valid index and insert count arr and table entry
+
+if dont want to keep the object
+    the name ptr in object is freed
+    fd and namePtr become 0
+    toFreeObject is freed
+
+
+
+
+
+
 
 
 
