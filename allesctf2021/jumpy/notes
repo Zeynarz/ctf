@@ -1,0 +1,12 @@
+Exploit ideas:
+probably can bypass the jmp check by double jumping
+can insert new opcodes by using moveax
+If you insert jmp opcode using moveax,the jmp wont be checked
+
+can execute shellcode this way
+
+Shellcode:
+slowly set up /bin/sh on stack
+pop rdi
+set eax to execve(0x3b)
+syscall

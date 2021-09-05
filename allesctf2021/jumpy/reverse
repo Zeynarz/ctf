@@ -1,0 +1,58 @@
+Setup:
+instruction_t object holds mneumonic and opcode
+3 instruction_t objects are created and stored in INSNS (holds ret,jmp,moveax) 
+
+0x555555557da0 <INSNS>: 0x55556007      0x00005555      0x000000c3      0x00000000
+0x555555557db0 <INSNS+16>:      0x5555600b      0x00005555      0x000000eb      0x00000000
+0x555555557dc0 <INSNS+32>:      0x5555600f      0x00005555      0x000000b8      0x00000000
+
+Create new memory segment that starts at 0x1337000000,memset the memory segment to 0xc3 (called mem)
+cursor = mem
+There is also a jump targets array (one element is one byte long)
+
+functions:
+isns_by_menumonic:
+   -loop through INSNS's objects mneumonic and compare to argument
+   -return ptr of INSNS that has same mneumonic (EXAMPLE: return 0x555555557db0)
+
+
+Main while loop:
+    -read user mneumonic
+    -calls isns_by_mneumonic on user mneumonic and get the opcode of the mneumonic
+    -set *cursor()/mem to the opcode then cursor++
+        (Enter the opcode into 0x1337000000)
+    switch statement:
+        -if user wanted moveax instruction:
+            -userInput is requested again (move what into eax) and store in mem
+            -cursor += 4
+        -if user wanted jmp:
+            -reallocate jump_targets array so enough space to hold jmps 
+                (realloc + 1 byte)
+            -read whr to jump (1 byte,%hhd is short int) and store in mem
+            -cursor++ 
+            -calculate the addresss to jmp to and store in jump_targets (0x7fffffffe270)
+                (calculated by adding rip/cursor and whr to jmp)                
+
+        -if user wanted ret:
+            -do nothing
+
+    -can exit while loop once all instructions are set (exit by typing random stuff)
+
+Once all instructions are set
+For loop that checks the jump_targets:
+    -calls is_supported_op on *jump_targets[i] (the opcodes of the addresses in jump_targets)
+        (supported ops are ret,jmp and moveax)
+
+Set 0x1337000000 to r-x
+And execute the code
+
+
+Questions:
+    Can jmp to places bigger than 0xff?
+
+
+void *reallocarray(void *ptr, size_t nmemb, size_t size);
+
+The  reallocarray()  function changes the size of the memory block pointed to by ptr to be large enough for
+an array of nmemb elements, each of which is size bytes.  It is equivalent to the call
+

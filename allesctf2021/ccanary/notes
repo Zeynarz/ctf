@@ -1,0 +1,13 @@
+Buffer overflow
+yourinput: 0x7fffffffe278
+postfix  : 0x55555555601e
+
+Ideas:
+overwrite first few bits and just print flag(null byte messes up partial overwrite)
+What addresses dont have aslr and is always constant
+.bss all has aslr except for vsyscall which always starts at (0xffffffffff600000) 
+
+Wow calling 0xffffffffff600000 doesnt segfault and just returns
+
+TODO: learn more about vsyscall and vdso
+https://github.com/torvalds/linux/blob/abfbb29297c27e3f101f348dc9e467b0fe70f919/Documentation/admin-guide/kernel-parameters.txt#L5535-L5553
