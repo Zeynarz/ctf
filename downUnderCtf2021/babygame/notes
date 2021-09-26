@@ -1,0 +1,12 @@
+NAME = 0x5555555580a0
+
+NAME is directly above RANDBUF 
+RANDBUF is holding a the fileName string
+
+set_username uses strlen to determine len of string,if at the beginning name is 32 bytes,
+strlen would also include the len of RANDBUF and I could write 38 bytes
+
+Could also use this to leak the RANDBUF address
+
+after leaking the RANDBUF address,overwrite it with the address pointing to /bin/sh
+and since the first byte in /bin/sh is constant, can win the game

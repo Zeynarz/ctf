@@ -1,0 +1,13 @@
+request note size :12
+
+param chunk = 0x55555555b2a0
+first note  = 0x55555555b2c0
+
+note -> size is the first 4 bytes of the note chunk
+
+heap overflow?
+UAF? prob no
+double free? prob no
+
+negative size wont work since every int is unsigned
+1 bytes overwrite?

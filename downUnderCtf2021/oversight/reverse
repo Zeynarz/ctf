@@ -1,0 +1,23 @@
+Nothing special in main,only called the wait function
+
+wait:
+    reads a number (maximum 5 digits) and converts it to a long
+    The magic number is probably a leak
+    the number read is used to be part of the format string
+    if the number read is d
+    magic number is %d$lx
+
+    original format string:
+    %%%d$llx
+
+introduce just calls get_num_bytes
+
+get_num_bytes:
+   Ask how many bytes you want to read (n)
+   reads n bytes then echoes it to the terminal
+
+echo:
+    There is a 256 bytes buffer
+    Reads n bytes into buffer
+    (Null byte is set so no strlen vuln , but maybe can have a one byte overwrite?)
+    prints the buffer 

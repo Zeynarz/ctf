@@ -1,0 +1,21 @@
+what: 0x7fffffffe27c (4 bytes)
+where: 0x7fffffffe280 (9 bytes)
+
+puts@got = 0x404018
+
+if overwrite exit@got,can get infinite loop
+if overwrite atoi@got with system,then can just type /bin/sh and get shell
+
+Exploitation
+--------------
+   0x00000000004011e0 <+55>:    mov    rdi,rax
+   0x00000000004011e3 <+58>:    call   0x401030 <puts@plt>
+
+before calling exit,rax is the "where" we entered
+
+first write -> overwrite exit@got to 0x4011e0 to get unlimited loop and setup libc leak
+second write -> overwrite 4 bytes before stdout to "AAAA",so after exit,stdout will be leaked
+third write -> overwrite exit@got to main to get rid of movaps issue using the push at the beginning
+fourth write -> overwrite atoi@plt to libc system
+
+after that,just type sh when the program asks where and will hopefully a get shell

@@ -1,0 +1,46 @@
+welcome() just prints a flag banner (rly cool btw),print_menu() just prints the menu
+
+param (struct):
+    unsigned int maxsize
+    (object is 4 bytes)
+
+datanote (struct):
+    unsinged int size;
+    char data
+    (object is 5 bytes)
+
+main:
+    note is a datanote pointer
+    param_t object stored in malloc(4),maxsize property of the object is set to 0x7f
+    param = objects pointer i.e the heap chunk
+
+    choice 1 (Create note):
+        request size then 
+        note = create_note(size,params)
+
+    choice 2 (Show note):
+        shownote(note)
+
+    choice 3 (Edit note):
+        editnote(note)
+
+    choice 4 (Delete note):
+        free(note)
+        note = 0 (no UAF?)
+
+create_note:
+   size check using the param_t object,so if maxsize of the object is overwritten,can malloc bigger chunk 
+   note  = malloc((size| 0x80) + 8),the size property of note is also set to size
+   (Essentially malloc(size+0x88),if size < 0x80)
+
+   Can keep creating new notes,but can only hold on to one
+
+show_note:
+    fwrite(&(note->data), note->size, 1, stdout);
+
+edit_note:
+    read chars into data property of note until newline
+    newline will get replaced will null byte
+    (1 byte overflow?)
+
+

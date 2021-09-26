@@ -1,0 +1,32 @@
+buffer = 0x7fffffffe0b0
+ret(get_num_bytes+82) = 0x7fffffffe108
+
+pwntools aslr off
+buffer = 0x7fffffffe100
+
+Got ret pointer control when write 256 bytes,why?
+Because I overwrote echo's rbp,which messed up the leave at get_num_bytes
+leave is just rsp = rbp,pop rbp
+
+There is a one byte overwrite which is caused by the null byte set in echo_inner
+which will turn rbp -> 0x7fffffffe1b0 -> 0x7fffffffe1e0 into rbp -> 0x7fffffffe1b0 -> 0x7fffffffe100
+
+when echo leave,rbp -> 0x7fffffffe100,and when get_num_bytes leave,rsp -> 0x7fffffffe100 (0x8 after pop)
+which is where we entered our bytes
+
+(rbp used to store all stack bottom,when entering a function,push rbp,rbp = rsp is called)
+
+if you pick number 1,it will leak PIE
+if you pick number 17, it will leak libc
+
+Exploitation
+--------------
+After overwriting rbp and all the leave instructions,we dont know where rsp will be pointing,but we know
+that it will be pointing at our buffer. So Im just going to fill up the buffer with rets and leave one
+instruction at the bottom of the buffer. (Doesnt work 100% of the time,works majority of the time tho)
+
+Overwrite puts@got to oneshot gadget?
+
+
+Leak libc and use pop Rdi etc from libc?
+

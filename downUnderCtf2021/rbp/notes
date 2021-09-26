@@ -1,0 +1,31 @@
+Reverse:
+    program justs asks for your name (24 bytes) and stores it on the stack
+    Then asks for a number and adds the number to rbp
+
+can most probably make it so that rsp is the name buffer using leave
+leave : rsp = rbp, pop rbp
+
+nameBuffer = 0x7fffffffe2b0
+rbp = 0x7fffffffe2d0
+
+rbp - 0x20 = nameBuffer
+
+also have to account for pop rbp
+so favourite num = -0x20 - 8 = -40
+
+only can write 24 bytes,so ROPChain can only have 3 gadgets/addresses (need 4 gadgets/addrs to leak libc)
+
+Maybe can call main again and create one more buffers
+
+Gadgets in the buffer could be, popRdi,putsPlt,add Rsp ? and add the stack pointer to point to the first buffer
+and continue execution there
+
+So our ROPChain can have 5*8 bytes 
+
+
+pwntools aslr off
+1st Buffer = 0x7fffffffe310
+2nd Buffer = 0x7fffffffe2f0
+
+add rsp during addr = 0x7fffffffe300 
+want to set rsp to = 0x7fffffffe318 
