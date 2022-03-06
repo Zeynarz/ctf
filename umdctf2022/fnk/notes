@@ -1,0 +1,38 @@
+You have to priv esc to be able to cat the flag?
+fnk is ran by "cool" so you prob still can exploit it through some vuln and get a shell
+But I think the intended way is prob to do a local exploit.
+
+Is there a race condition since there are so many child processes? Prob no, the global vars are
+all accessed one by one, not concurrently
+
+
+heap overflow because malloc(to_flasks...) was wrong?
+0x55555555a2d0: 0x00000000      0x00000000      0x00000021      0x00000000
+0x55555555a2e0: 0x00000003      0x00000004      0x00000007      0x00000008
+0x55555555a2f0: 0x0000000b      0x0000000c
+
+0x555555559050: flasks
+0x555555559058: mixing
+0x555555559060: to_flasks
+0x555555559068: to_main
+
+maybe after two sends, one bigger size and one smaller size, they will mash up tgth?
+When reused, argv[req->idx] = arg, investigate if there are possibilities for errors. UAF? combine?
+
+
+To execute instructions as uncool:
+Setup a flask so that 
+argv = {"/bin/cat","/home/fnk/flag"}
+
+after execvp(argv[0],argv); The output would be sent to the parent process, so we need a way
+to retrieve that data.
+
+We can empty the flask to print out the output
+Once a flask is mixed and it executes an instruction, it can't be mixed again until its emptied
+ingredients = commands and arguments,mix = execute the commands and arguments
+
+The thing is, you need to be "cool" to read the flag.
+
+Questions
+------------
+-xinetd is a unix daemon that handles requests? (manages connections?)

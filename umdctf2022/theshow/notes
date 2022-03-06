@@ -1,0 +1,39 @@
+memory & addresses:
+salt = 'UMD_15_Th3_B35T'
+
+actList @ 0x6f7640
+
+the "global vars" look like this:
+(some of the "global vars" are in the heap memory region, but they don't seem like heap chunks since
+they don't have any heap metadata, maybe gdb is wrong?)
+
+0x6e84f0: 0x00719d00            showDescription (char ptr)
+
+0x6f7620: 0x00719b30            message1 (char ptr)
+0x6f7628: 0x00719c90            currentAct (act ptr)
+0x6f7630: 0x00719b90            message2 (char ptr)
+0x6f7638: 0x00719c00            message3 (char ptr)
+0x6f7640: [0x00719c90,0,0,...]  actList (bunch of act ptrs)
+0x6f76c0: 0x00719c90            mainAct (act ptr)
+
+
+
+exploit info&ideas:
+We have stack buffer overflows @ the scanfs, but they don't seem quite useful 
+Stack cookie is still in the way, but might still able to overwrite some vars
+
+There is a heap overflow @ fgets(showDescription,500,stdin);
+
+Prob can use a heap overflow or some way to overwrite tellAJoke and call own function.
+Maybe can create an own act, and insert it into the actList, then perform the act and call
+own function
+
+
+if showDescription size = 120, malloc(120+8) = malloc(0x80) will return message 3 chunk, and we
+can overwrite mainAct
+
+found function _dl_make_stack_executable with "objdump -t | grep exec" 
+Can prob call _dl_make_stack_executable, and while in switchAct, buffer overflow the stack into 
+returning to shellcode?
+
+win function@0x400bed

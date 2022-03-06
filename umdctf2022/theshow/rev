@@ -1,0 +1,66 @@
+Questions:
+Is __strncpy_sse2_unaligned,__strncmp_sse42 and __memset_avx2_unaligned just strncpy,strncmp and memset?
+I'm assuming it is.
+
+malloc_set
+-----------
+Normal malloc is called, and every byte of the malloced chunk is set to 0 
+
+setup
+---------
+Write the welcome strings in the heap and print them out
+0x6f7620 : 0x00719b30      0x00000000 (message1)
+0x6f7630 : 0x00719b90      0x00000000 (message2)
+0x6f7638 : 0x00719c00      0x00000000 (message3)
+
+0x719b30:       "Welcome to the comedy club!\n"
+0x719b90:       "We only have the best comedians here!"
+0x719c00:       "Please help us set up for your act\n"
+
+Asks for the name of your act (with no size restriction)
+mainAct points to a size 0x68+(prob 0x70) heap chunk
+
+0x20 bytes of the actName is then copied to the chunk mainAct is pointing at
+
+local_40 = crypt("Main_Act_Is_The_Best","UMD_15_Th3_B35T");
+this crypt call returns "UMfUK2Yf6FKpI"
+
+0x40 bytes of the return val of the crypt call is then copied to mainAct+0x20
+(I'm guessing that mainAct is some type of struct or smthg)
+
+*(mainAct + 0x60) = tellAJoke;
+(tellAJoke is a function,but its just a placeholder function for us to overwrite later on)
+
+currently the structure of what mainAct is pointing at
+mainAct+0 : actName
+       +20: UMfUK2Yf6FKpI 
+       +60: tellAJoke
+
+(mainAct structure)
+
+message1 and message3 are then freed, message2 is still in use
+
+showDescription is pointing at "malloc_set(descriptionSize + 8)"
+Then 500 bytes are requested to be in the heap chunk showDescription is pointing at.
+
+then 
+actList._0_8_ = mainAct; (?)
+put mainAct into the actList
+
+actList is prob a global array (16 elements long) that points to act objects.
+
+
+whatToDo
+----------
+Choice 1: Call the function in the chunk currentAct is pointing at. (Intended function: tellAJoke)
+Choice 2: call switchAct
+Choice 3: return 1
+
+
+switchAct
+----------
+Input actName and actCode
+The actCode is then used as an arg for crypt, the other arg is UMD_15_Th3_B35T
+
+Iterate through the actList, if there is an act with the same name and cryptRetVal,
+currentAct would now be pointing at that act object

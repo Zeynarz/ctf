@@ -1,0 +1,7 @@
+Leak canary and libc then ret2libc?
+
+nameBuffer = 0x7fffffffe220 (16bytes)
+doTdyBuffer  = 0x7fffffffe230 (72bytes)
+
+stack cookie @ 0x7fffffffe278 (rbp - 0x10)
+

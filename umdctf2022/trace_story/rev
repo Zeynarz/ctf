@@ -1,0 +1,58 @@
+What is seccomp?
+seccomp allows a process to make a one-way transition into a "secure" state where it cannot make any 
+system calls except exit(), sigreturn(), read() and write() to already-open file descriptors.
+So essentially a process with seccomp can only make certain syscalls.
+
+main
+-------
+fork the process, the child process calls read_story, the child process falls into an infinite loop
+
+if debug != 0 (debug mode is on), input is read and setup_seccomp is called
+the userInput that u just entered will be executed, so its like shellcode that u can freely
+execute (still need to respect the rules of seccomp of course)
+
+
+read_story (child process)
+---------------------------
+if the pid of the child process is odd, open readstory.txt 
+(open(file) returns -1 if encounter any errors)
+
+if fileFd is 0 and debug != 0, the process exits
+the file contents of readstory.txt is then read into a buffer, if nothing is read, the process exits.
+
+fileFd is closed, process sleeps for 1 second, and the whole thing repeats
+
+setup_seccomp (parent process)
+-------------------------------
+seccomp_init() is called
+A bunch of seccomp_rule_add are called to add new filter rules to the current seccomp filter
+
+int seccomp_rule_add(scmp_filter_ctx ctx, uint32_t action, int syscall,unsigned int arg_cnt);
+0x7fff0000 prob means allow syscall to be used
+
+If so, list of syscalls allowed to use:
+sigreturn
+read
+write
+close
+stat
+fstat
+lstat
+ptrace
+mprotect
+brk
+access
+sched_yield
+dup
+dup2
+clone
+exit
+kill
+chdir
+fchdir
+gettimeofday
+getuide
+getgid
+exit_group
+
+the seccomp filter is then loaded into the kernel, and the filter is active

@@ -1,0 +1,164 @@
+main
+--------
+Pretty sure the sigaction code is used to make sure when signals like SIGINT is sent by xinetd 
+signal_handler is called
+
+init_flasks
+---------------
+static ptr flasks pointing at an arr of pids(ints) located in heap, mixing pretty much same thing
+to_flask is an int ptr poiting at a couple of 2 ints
+
+if n = 3
+to_flask : heapAddr
+heapAddr: int1  int2    int3    int4    int5    int6
+
+to_flask[0] prob means int1,int2, the first arr of 2
+
+Setup bidirectonal communication piping between each flask and parent process?
+
+Process is forked for all the flasks, all the child processes proceed to execute proc_flask(index),
+and parent process sets num_flask = n; n being the amount of flasks entered, then returns to main
+and calls prompt_loop
+
+(1 flask = 1 child process)
+
+to_flask and to_main is used for piping.
+to_flask pipes: flask <- main
+to_main pipes : flask -> main
+
+
+if amount of flasks = 2, child process amount = 2
+
+addr1    : heapAddr1 (to_flask)
+addr2    : heapAddr2 (to_main)
+heapAddr1: flask0Read mainWriteToFlask0 flask1Read mainWriteToFlask1
+heapAddr2: mainReadFromFlask0 flask0WriteToMain mainReadFromFlask1 flask1WriteToMain
+
+(main here means the parent process)
+
+prompt_loop (parent process)
+------------------------------
+Enter flaskId, (flaskId must be in range of 1 to 3)
+
+Request Ingredient:
+Enter order and arg(ingredients), then flask_add(flaskId,order,arg,argLen)
+
+order must be in range of 1 -> 16 
+arg must be < 256
+
+Submit Recipe:
+flask_mix(flaskId) 
+
+Empty Flask:
+flask_empty(flaskId)
+
+
+flask_add (parent process)
+----------------------------
+Get index of flasks by id -= 1 and order -= 1
+Return if the flask is mixing.
+
+req is pointing at a request structure in the heap (malloc(sizeOf request struct + argLe))
+
+The size of the request structure is 3.
+
+struct request {
+    char cmd;
+    char idx;
+    char len;    // optional
+    char arg[0]; // This field is just used later for copying the ingredients/data to here.
+};
+
+So the request object is prob a few headers, like cmd and idx, and then the rest is data(arg)
+which are the ingredients to add to the flask.
+
+
+The metadata of the request req is pointing at are then set,
+  req->cmd = CMD_ADD;
+  req->idx = order;
+  req->len = argLen;
+
+The ingredients are then copied to req->arg, in memory a request object should look like this
+if flask_add(1,3,"gamerDrink",10)
+
+addr1     : heapAddr (req)
+heapAddr+0: CMD_ADD (0)
+        +1: 2
+        +2: 10
+        +3: "gamerDrink" (not ptr, chars are actually here)
+
+
+using to_flask[flaskId][1], send the request to the corresponding flask child process.
+
+req is then freed.
+
+
+flask_mix (parent process)
+----------------------------
+id -= 1 to get index 
+Create a request req with cmd = CMD_MIX
+
+Send the request to the corresponding flask (child process) and set mixing = true;
+
+
+proc_flask (child process)
+----------------------------
+setup in_fd to read from parent, and out_fd to write to parent
+
+argv is ptr pointing at another ptr pointing at a char
+*argv is a ptr pointing at a char, so sizeof(*argv) = 8bytes
+
+addr1 : heap(argv)
+heap  : ptr0 ptr2 ptr3 ptr4 ... ptr15(16*8bytes of available space)
+ptr0  : "RANDOM ARGUMENT HERE"
+
+This should be how it works, argv is prob an array of strings.
+
+req is pointing at a request structure located in the heap. (heap chunk size = 259)
+
+SOME STUFF ABOUT PROCESS GROUPS (Need to research more abt here)
+
+stdout and stderr is set to the same as out_fd, so 
+outfd ---|
+stdout --|-> buffer1
+stderr --|
+
+Then the child process starts listening for requests, once a request is received
+
+If the request is CMD_ADD:
+A new heap chunk of size(req->len+1) is malloced to store the ingredients
+ingredients is copied from the request object to the new heap chunk(arg), a null byte is then
+added to the end of the ingredients
+
+the order/idx property is used to access argv (the arr of strings).
+So order is used to manipulate the "order" of the args/ingredients
+
+argv[order] then points to arg,the heap chunk that contains the ingredients 
+If argv[order] already points to an arg, the arg is freed.
+
+The following while loop will never be hit (not sure) since it requires argv[order] == NULL
+Since even if no args, arg=malloc(1) or does NULL here mean empty string or smthg?
+
+If order = 5,the while loop just turns:
+[0,0,"gamer",0,0,0,0,...] to [0,0,"gamer","","","",0,...]
+
+(Write out the memory?)
+
+
+If the request is CMD_MIX:
+set uid and gid to 1000, and execvp(argv[0], argv);
+
+int execvp(const char *file, char *const argv[]);
+The char *const argv[] argument is an array of pointers to null-terminated strings  that  represent
+the argument list available to the new program.  The first argument, by convention, should point to
+the filename associated with the file being executed.  The array of pointers must be terminated  by
+a null pointer.
+
+So does 
+argv = ["/bin/sh",]
+
+
+helpers
+---------
+get_int and get_line are secure
+

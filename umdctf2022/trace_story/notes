@@ -1,0 +1,34 @@
+Is the objective to read the story? We can try to attach to the process and read the buffer?
+ptrace?
+
+We can try ptracing into the child process, and before the child process executes the open 
+syscall,we can modify the args of the syscall so that it opens flag instead of readstory.txt
+
+Read the flag then write the flag contents in the "Finished" buffer to print the flag?
+
+How do debuggers ptrace to a process when the tracee doesnt call ptrace(PTRACE_TRACEME,...)
+PTRACE_ATTACH
+
+in C:
+#define PTRACE_ATTACH 16
+#define PTRACE_PEEKUSER 3
+
+ptrace(PTRACE_ATTACH,childPid,0,0)
+ptrace(PTRACE_PEEKUSER,childPid,44,0)
+
+in asm:
+// ptrace(PTRACE_ATTACH,childPid,0,0)
+mov rax,SYS_ptrace
+mov rdi,0x10
+mov rsi,childPid
+mov rdx,0
+mov r10,0
+syscall
+
+// ptrace(PTRACE_PEEKUSER,childPid,44,0)
+mov rax,SYS_ptrace
+mov rdi,0x3
+mov rsi,childPid
+mov rdx,0x2c
+mov r10,0
+syscall
