@@ -1,0 +1,10 @@
+(gdb with aslr off)
+buf = 0x7fffffffe170 (32 bytes)
+rbp = 0x7fffffffe190
+ret = 0x7fffffffe198 (checked if it is 0x401212)
+
+
+set vuln stack frame *rbp to 0x404038 (puts@got + 0x20), after vuln leaves (execute leave), and the program 
+is in the main stack frame, rbp will now be 0x404038, and fgets() will read into 0x404018. 
+
+Write the addr of win function (0x401249) and puts will call win

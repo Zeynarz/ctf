@@ -1,0 +1,9 @@
+malloc(n),write stuff into ptr
+have a heap overflow, can always write 100 bytes into chunks of any size
+
+House of Force
+https://guyinatuxedo.github.io/41-house_of_force/house_force_exp/index.html
+https://heap-exploitation.dhavalkapil.com/attacks/house_of_force
+
+Goal: overwrite atoi@got entry with system@libc
+

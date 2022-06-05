@@ -1,0 +1,21 @@
+sbrk:
+The brk and sbrk calls dynamically change the amount of space allocated for the DATA SEGMENT of the calling process. The change is made by resetting the program break of the process, which determines the maximum space that can be allocated. The program break is the address of the first location beyond the current end of the data region. The amount of available space increases as the break value increases. The available space is initialized to a value of zero, unless the break is lowered and then increased
+
+use brk to set where you want the break to be, use sbrk to increase or decrease the break by n,
+On success, brk() returns zero. On success, sbrk() returns the previous program break.
+
+sbrk(0) to get the current program break. (It returns the top of the heap(?))
+
+
+strcspn:
+The strcspn() function calculates the length of the initial segment of s which consists entirely of bytes
+not in reject.
+
+---------------------------------------------------------------------------------------------------
+
+Choice 2:
+score is converted to long size, and is then malloced. 
+~malloc(score)
+
+The Hall Of Famer is then written into that chunk
+heap_pointer = ptr;
