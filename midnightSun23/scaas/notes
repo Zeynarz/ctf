@@ -1,0 +1,25 @@
+use cyber chef to convert og file to elf file
+
+
+didn't rly read finish the code but pretty sure that scaas just mmaps a rwx region, 
+copy input to there, and run it 
+
+the input supposedly should only be alphanumeric
+
+can't use nullbyte to get past the alphanumeric check cause strlen is used to determine how 
+many bytes is copied to the memory region
+
+
+
+for some reason, if shellcode len = 0x100
+$ecx   : 0x2a83b080
+
+
+
+nvm, no need craft own shellcode
+just
+
+msfvenom -a x86 --platform linux -p linux/x86/exec CMD=/bin/sh -e x86/alpha_mixed BufferRegister=EDX
+
+(spent a lot of time crafting own shellcode, then remembered that the chall category was autopwn. bruh.
+So I just googled autopwn and found msfvenom.)

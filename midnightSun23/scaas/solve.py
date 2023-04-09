@@ -1,0 +1,5 @@
+from z3 import *
+
+x = BitVec("x",32)
+solve((x* 0x526) % 0x31ef03 == 0x1149)
+solve(URem(((x * 0x213f) & 0xffffffff),0x2b27ea) == 0x5fa6)
