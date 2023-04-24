@@ -1,0 +1,5 @@
+chall is copied from docker container, so this binary is exactly the same as the one on the server
+
+leap at 0x1440 to change the arg of read, so can read in more shellcode
+
+flag is at 0x8888dc

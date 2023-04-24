@@ -1,0 +1,2 @@
+gets writes into 0x007fffffffe030
+ret @ 0x007fffffffe068

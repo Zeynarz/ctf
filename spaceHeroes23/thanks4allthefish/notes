@@ -1,0 +1,32 @@
+/proc/[pid]/comm (since Linux 2.6.33)
+       This file exposes the process's comm value—that is, the
+       command name associated with the process.  Different
+       threads in the same process may have different comm
+       values, accessible via /proc/[pid]/task/[tid]/comm.  A
+       thread may modify its comm value, or that of any of other
+       thread in the same thread group (see the discussion of
+       CLONE_THREAD in clone(2)), by writing to the file
+       /proc/self/task/[tid]/comm.  Strings longer than
+       TASK_COMM_LEN (16) characters (including the terminating
+       null byte) are silently truncated.
+
+getppid() returns the process ID of the parent of the calling process.
+
+so like
+bash(132204)───yoyo(132432)
+yoyo's parent is bash
+
+bash(130747)───gdb(131827)───thanks4allthefish(131871)
+thanks4allthefish's parent is gdb
+
+so getppid just returns like the current parent, not like the final/biggest parent process, which will be
+systemd(1)
+
+
+
+/bin/grep tidbits /proc/*/comm
+
+it greps from ALL process' comm
+
+make 3 running instances of bots.py 
+then run solve.py

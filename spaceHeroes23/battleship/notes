@@ -1,0 +1,7 @@
+we have to make a battle ship map that makes is_flag = 0 (which means True for this chall)
+then the ~s and Bs prob just represents 1s and 0s
+
+9 rows
+largest column is 163 long
+
+nvm, the map just directly shows u the flag 

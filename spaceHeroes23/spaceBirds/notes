@@ -1,0 +1,18 @@
+(for 64 bit)
+first 5 args of a func use registers prob
+then 6th arg start using stack
+
+0x007fffffffe000
+ret = 0x007fffffffe078
+
+local_78 is 104 bytes big
+but could read 108 bytes
+
+if u write 105 bytes, will overwrite stack cookie
+So overwrite __stack_chk_fail got to one_gadget
+
+and profit
+
+
+cant put the addresses at the start since printf will stop printing once it reaches a null byte
+(since strings end with a null byte)

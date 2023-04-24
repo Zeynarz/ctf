@@ -1,0 +1,19 @@
+no boundary check on modify and list target
+just leak the rwx memory region addr
+and ret to there
+
+ghidra says that local_1c is unsigned
+but __isoc99_scanf("%d",&local_1c);
+a decimal ("%d") is read into local_1c, not "%u"
+so negative numbers prob still work
+
+since scanf is reading in decimals, and it stores the decimal in local_1c
+
+
+
+targets =  0x007fffffffdff0 
+performAction ret = 0x007fffffffdfd8
+rwx region addr in 0x007fffffffdfe8
+
+-1 to leak rwx region addr
+-3 to overwrite performAction ret

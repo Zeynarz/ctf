@@ -1,0 +1,4 @@
+pretty sure its the same as cardassian but just without the rwx region
+
+ret = 0x007fffffffe018
+target = 0x007fffffffe030

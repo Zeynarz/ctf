@@ -1,0 +1,6 @@
+the r function just minuses each byte by 4
+the first 9 and last 9 bytes are passed through the r function and compared with
+od_pbw1gu and d/[h-i-py
+
+the middle 9 bytes are turned to hex and compared with
+5F31735F6E30745F74
