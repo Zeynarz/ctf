@@ -1,0 +1,35 @@
+gdb aslr Off
+main = 0x56558b71
+pokemonListGlo = 0x5655cb80
+evolve = 0x56556543
+execOwnCode = 0x565565b3
+
+adventurerObj = 0x5655c1a0
+
+
+a lil heap overflow
+rand seed no set so the sequence of random numbers are always the same
+
+
+adventurerObj       : "A"*16
+adventurerObj+0x10  : abilities (treated as a char)
+adventurerObj+0x14  : balls_used (int)
+adventurerObj+0x18  : pokemon caught prob
+adventurerObj+0x1c  : caughtPokemonObj1
+                    : caughtPokemonObj2 
+                    : ...
+
+
+.bss? : pokemonListGlo (a heap addr)
+
+pokemonListGlo: null  pokemonObj
+
+(in heap too)
+pokemonObj:  charPtr    id(prob)     randNum(1-100)
+
+
+"bulbasaur" etc strings are stored in the .text segment
+
+
+
+need to use the pokemonIds to make shellcode

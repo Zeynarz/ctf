@@ -1,0 +1,10 @@
+there is a buffer overflow
+just overflow arceus's splashPp to 0 and fight
+
+or just up the splashPp till the int becomes neg (cause MSB is 1, two's complement)
+(ghidra says that splashPp is unsigned tho, did ghidra just make a mistake??)
+(printf uses %d tho, not %u)
+
+(just confirmed with organizers, in the source code, splashPp is a signed int)
+
+choice = 0x7fffffffdc80

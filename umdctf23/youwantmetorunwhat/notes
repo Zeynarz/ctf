@@ -1,0 +1,82 @@
+main: 0x461ca0
+execute own code: 0x4ce3ef
+print flag: 0x04cd6d9
+test eax,eax: 0x04cd6d1
+checkstr: 0x4cd6cc
+
+In assembly language, the CPUID instruction takes no parameters as CPUID implicitly uses the EAX register to determine the main category of information returned. In Intel's more recent terminology, this is called the CPUID leaf.
+
+So eax=0 means cpu leaf 0
+the information cpuid returns depends on the cpu leaf
+
+executing cpuid with eax=0, cpuid will sets eax = highest cpu leaf possible
+
+leaf 0 helpfully loads ebx, ecx and edx with the twelve characters of a vendor string.
+(Vendor strings like GenuineIntel, AuthenticAMD etc)
+
+(the code wants to make sure we're running GenuineIntel)
+
+cpuid changes these 4
+$rax   : 0x306d4
+$rbx   : 0x20800
+$rcx   : 0xdefa2203
+$rdx   : 0x178bfbff
+
+registers
+
+---------------------------------------------------------------
+
+
+nvm, just look at this:
+https://cujo.com/reverse-engineering-go-binaries-with-ghidra/
+
+
+FOUND gopclntTab @ 0x0522e60 
+for some reason the magic bytes are 0xfffffff1, not 0xfffffffb
+maybe diff version of go?
+
+nvm just use 
+https://github.com/mandiant/GoReSym
+
+input between 10-16 bytes
+if not a unicode/utf8 valid string, will output "That is not a family friendly thing to run!"
+(needs to be in ascii table?, from 0 -> 7f)
+
+CPU is sad if ur shellcode segfaults
+
+make a ret:
+push rsp
+pop rcx
+
+push rdi
+pop rax
+xor al,0x20
+push rax
+
+push rdx
+pop rax
+xor al,0x43
+
+pop rsp
+push rcx
+push rax
+pop rax
+pop rsp
+
+gef➤  info proc
+process 11952
+cmdline = '/home/vagrant/ctf/umdctf23/youwantmetorunwhat/youwantmetorunwhat'
+cwd = '/home/vagrant/ctf/umdctf23/youwantmetorunwhat'
+exe = '/home/vagrant/ctf/umdctf23/youwantmetorunwhat/youwantmetorunwhat'
+gef➤  shell ls -la /proc/11952/fd
+total 0
+dr-x------ 2 vagrant vagrant  0 Apr 29 16:05 .
+dr-xr-xr-x 9 vagrant vagrant  0 Apr 29 16:05 ..
+lrwx------ 1 vagrant vagrant 64 Apr 29 16:05 0 -> /dev/pts/10
+lrwx------ 1 vagrant vagrant 64 Apr 29 16:05 1 -> /dev/pts/10
+lrwx------ 1 vagrant vagrant 64 Apr 29 16:05 2 -> /dev/pts/10
+lrwx------ 1 vagrant vagrant 64 Apr 29 16:05 3 -> 'socket:[125631]'
+lrwx------ 1 vagrant vagrant 64 Apr 29 16:05 4 -> 'socket:[125641]'
+lrwx------ 1 vagrant vagrant 64 Apr 29 16:05 5 -> 'anon_inode:[eventpoll]'
+lr-x------ 1 vagrant vagrant 64 Apr 29 16:05 6 -> 'pipe:[125632]'
+l-wx------ 1 vagrant vagrant 64 Apr 29 16:05 7 -> 'pipe:[125632]'
