@@ -1,0 +1,3 @@
+gdb, aslr off
+highscore = 0x7fffffffdfe8
+buf = 0x7fffffffe030

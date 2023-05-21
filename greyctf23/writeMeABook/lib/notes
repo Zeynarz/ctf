@@ -1,0 +1,24 @@
+can use choice 1337 to leak something oob
+
+books is a global arr holding the books
+
+index only 1 - 10
+but the program later on treats 1 is 0, and 10 is 9 etc 
+
+author_signature = 0x4040d0
+books = 0x4040e0
+
+
+gdb aslr off
+own first heap chunk = 0x408d00
+fastbin idx0  = 0x1555554e5c90
+
+
+tcache has canary?
+
+there's a lot of new heap stuff for glibc 2.35
+https://ctftime.org/writeup/34804
+
+just use tcache poisoning
+(when tcache poisoning, even though the "heap canary" is messed up, it still works?
+how does the "heap canary" work?)
