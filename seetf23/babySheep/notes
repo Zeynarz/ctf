@@ -1,0 +1,78 @@
+texts = 0x555555558040
+buffer_sizes = 0x5555555580a0
+
+
+unintialised var vuln
+(was more aware of this bug after the readMeABook chall from greyctf which was solved by jackfromeast)
+
+you can overwrite free chunk with
+create -> update(-1)
+
+in update:
+0x7fffffffe00c = buffer_size
+0x7fffffffe010 = ptr
+
+
+in create:
+0x7fffffffe00c = 0x5555
+0x7fffffffe010 = footer
+
+
+in output:
+0x7fffffffe00c = buffer_size
+0x7fffffffe010 = ptr
+
+
+so you could use the uninitialised var vuln to leak heap and libc as well
+
+
+in delete:
+0x7fffffffe00c = buffer_size
+0x7fffffffe010 = ptr
+
+as well
+
+so just use delete and output to leak stuff
+
+
+
+
+when libc does deobfuscation, they prob dont need to worry abt the >>12 getting rid of bits thing cause
+they can just (pos >> 12) ^ obfuscated ptr to get pointer
+
+but for us binary exploiters, which dont know the position, and only know that
+obfuscated ptr = what
+pointer = 0
+
+when we << back the 12 bits, the last 0x000 will be null
+
+but that doesnt matter for us, since that way we can know the heap base
+
+
+only linked list (tcache and fastbin) have the obfuscation thing right?
+doubly linked list dont have
+
+
+
+----------------------------------------------------
+
+
+
+got arbitary overwrite, and overwrote free hook, and that confirmed that the freehook thing doesnt work
+anymomre after glibc 2.34
+
+remembered reading the writeup: https://ctftime.org/writeup/34804
+
+and it led me to an article on abusing exit handlers
+
+https://binholic.blogspot.com/2017/05/notes-on-abusing-exit-handlers.html
+https://m101.github.io/binholic/2017/05/20/notes-on-abusing-exit-handlers.html
+(same articles,different designs)
+
+but was too tired to read and understand, so I just sent my progress to the team discord and slept
+
+jackfromeast managed to solve it by following up on my work and using the abusing exit handler thing
+so not gonna work on this chall for now, prob will work on it after the ctf to learn about abusing exit
+handlers
+
+but for now, exploit.py doesnt work fully yet.

@@ -1,0 +1,10 @@
+put big sizes in write, then read
+read and write prob doesnt accept neg nums
+so need put the negative representation of like 1200, to get overflow
+
+(why does this work again?)
+
+notes = 0x4040e0
+sizes = 0x404400
+
+the author alr gave us a lot of gadgets in the binary
