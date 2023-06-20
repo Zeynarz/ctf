@@ -1,0 +1,28 @@
+neg index vuln?
+
+one entry in library:
+0x40 bytes of book title
+0x40 bytes of comment
+
+
+main = 0x55555555590c
+main ret = 0x555555555b01
+addBook = 0x555555555667
+sort = 0x55555555537b
+addComment = 0x55555555572a
+
+
+library = 0x7fffffffd8e0
+ret     = 0x7fffffffe078
+
+
+
+pwntools gdb:
+library: 0x00007fffffffd950
+ret @ 0x00007fffffffe0e8
+canary @ 0x00007fffffffe0d8
+
+uninitialised var vuln?
+
+in addComment:
+0x7fffffffd868: index

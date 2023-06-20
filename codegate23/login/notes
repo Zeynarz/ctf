@@ -1,0 +1,10 @@
+a4b3f9637bdb67ad9d2a38450e80e674 c2hdh4e9
+
+hashextender       : 1d4ed15ccae26e9b6246b5f9a1cbe8c9
+md5(id_key+USER_ID): 1d7cb47c2192bc984465292e826f0587
+
+
+20 bytes of secret
+1 byte 0x80
+padding with 0x00
+last 8 bytes = p64(hex(100))
