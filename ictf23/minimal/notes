@@ -1,0 +1,85 @@
+need to find a way to leak stuff
+
+
+   0x000000000040113e <+8>:     sub    rsp,0x10
+   0x0000000000401142 <+12>:    lea    rax,[rbp-0x8]
+   0x0000000000401146 <+16>:    mov    ecx,0x900
+   0x000000000040114b <+21>:    mov    rdx,rax
+   0x000000000040114e <+24>:    mov    esi,0x0
+   0x0000000000401153 <+29>:    mov    edi,0x0
+   0x0000000000401158 <+34>:    mov    eax,0x0
+   0x000000000040115d <+39>:    call   0x401040 <syscall@plt>
+   0x0000000000401162 <+44>:    mov    eax,0x0
+   0x0000000000401167 <+49>:    leave
+   0x0000000000401168 <+50>:    ret
+
+
+   0x00007ffff7eb3a3b <+27>:    syscall
+   0x00007ffff7eb3a3d <+29>:    cmp    rax,0xfffffffffffff001
+   0x00007ffff7eb3a43 <+35>:    jae    0x7ffff7eb3a46 <syscall+38>
+   0x00007ffff7eb3a45 <+37>:    ret
+
+syscall@plt (
+   $rdi = 0x0000000000000000,
+   $rsi = 0x0000000000000000,
+   $rdx = 0x00007fffffffe0a8 → 0x0000000000000000,
+   $rcx = 0x0000000000000900
+)
+
+b4 the syscall instr is executed
+rdi=rax
+rsi=rdi
+rdx=rsi
+rcx=rdx
+
+ 4320    0x7ffff7eb443a <qfcvt+106>:  pop    rsi
+ 4321    0x7ffff7eb443b <qfcvt+107>:  pop    rdi
+ 4322    0x7ffff7eb443c <qfcvt+108>:  cmp    eax,0xffffffff
+ 4323    0x7ffff7eb443f <qfcvt+111>:  je     0x7ffff7eb4450 <qfcvt+128>
+ 4324    0x7ffff7eb4441 <qfcvt+113>:  pop    rbp
+ 4325    0x7ffff7eb4442 <qfcvt+114>:  lea    rax,[rip+0x101ff7]        # 0x7ffff7fb6440
+ 4326    0x7ffff7eb4449 <qfcvt+121>:  pop    r12
+ 4327    0x7ffff7eb444b <qfcvt+123>:  pop    r13
+ 4328    0x7ffff7eb444d <qfcvt+125>:  ret
+
+ 4307    0x7ffff7eb4408 <qfcvt+56>:   pop    rdx
+ 4308    0x7ffff7eb4409 <qfcvt+57>:   mov    rax,QWORD PTR [rip+0xfb508]        # 0x7ffff7faf918
+ 4309    0x7ffff7eb4410 <qfcvt+64>:   pop    rcx
+ 4310    0x7ffff7eb4411 <qfcvt+65>:   pop    rbp
+ 4311    0x7ffff7eb4412 <qfcvt+66>:   pop    r12
+ 4312    0x7ffff7eb4414 <qfcvt+68>:   pop    r13
+ 4313    0x7ffff7eb4416 <qfcvt+70>:   ret
+
+just need to brute/guess 4 bits 
+(can pop rdi,rsi,rdx,rcx)
+
+
+syscall@got b4 ld.so
+GOT protection: Partial RelRO | GOT functions: 1
+[0x404018] syscall@GLIBC_2.2.5  →  0x401030
+
+
+1. overwrite rbp and use leave to setup rbp to syscall@got+0x10, ret to main+12
+2. (gonna call syscall@got+0x8 newRbp)
+   setup newRbp so that
+   newRbp: newRbp retGadget popRbp newRbp addRsp 8As addRsp 8As...  retGadget main+8 ...
+   when leave happens, rsp=newRbp+8, rbp is going to be set to newRbp, and the rets eventually go down to main+8, the addRsps and last retGadget is there so that when "call syscall@plt" eventually happens, only the As will get overwrote.
+3. Overwrite syscall@got with the last 2 bytes of qfcvt gadget
+4. When the execution flow eventually rets to main+8 again, "call syscall@plt" will actually call the qfcvt gadget, and we just pop stuff into the registers. The registers will get messed up at first ofc cause of the "sub rsp,0x10" in main, but we simply just ret to "syscall@plt" again, and setup the rdi rsi registers for a write syscall. Then the process will ret to 0x401030 (which sets up syscall@got using ld.so), and leak syscall@libc, the process will then ret to the entry point and start again
+5. ret2libc
+6. profit
+
+(check backup.py for more of my exploit dev lore for this chall)
+
+
+
+
+
+Used the whole night for this chall (till midnight), rly liked this chall. 
+Did a ton a ton of critical thinking and was rly in the zone/flow tonight for this chall.
+Rly missed this critical thinking/creative problem solving/being in the flow state of doing pwn, its my fav part of pwn and ctfs, its addicting 
+
+And when you eventually solve it in your head, that initial feel of adrenaline when you think you figured it out, when everything just feels right,and the exploit actually works after a ton of struggle. Nothing feels better than that.
+
+Thanks for this chall and the author for making this chall
+Missed this kind of stimulation and feeling.

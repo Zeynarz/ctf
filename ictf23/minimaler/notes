@@ -1,0 +1,10 @@
+was about to go bath and sleep
+then my teammate @linz told me that minimaler is the same as minimal
+
+So I just kept running my minimal exploit on this chall and it worked
+Maybe there was a cheese in the minimal chall, and the authors patched it in this one
+
+
+
+the error messages given by ./run.sh keeps making my exploit think it found libc
+So just ignore those

