@@ -1,0 +1,53 @@
+https://www.flightradar24.com/data/flights/ly383
+
+LY383:
+4X-EHB
+
+
+LY358:
+4X-EHB
+4X-EKP
+
+
+https://www.flightera.net/en/flight/El+Al+Israel+Airlines-Tel+Aviv-New+York/LY27/Feb-2018
+https://www.flightera.net/flight/LY355/Feb-2018
+
+
+
+4X-EKB, 4X-EKL, 4X-EKS, 4X-EKC, 4X-EKH, 4X-EKP, 4X-EKJ, 4X-EKF
+4X-EHB
+
+
+4X-EHB-4X-EKB
+4X-EHB-4X-EKL
+4X-EHB-4X-EKS
+4X-EHB-4X-EKC
+4X-EHB-4X-EKH
+4X-EHB-4X-EKP
+4X-EHB-4X-EKJ
+4X-EHB-4X-EKF
+4X-EHB-4X-EHB
+
+
+I tried this codes as flags and they didnt work
+I didnt know where to continue from this point on, and wanted to ask the author, so I visited their discord channel
+author said that the codes werent the flag, and there was a next part 
+(at this point I alr wanted to look at the boarding pass again and see stuff)
+
+I kept on reading and author dropped a hint in discord "just check the boarding pass carefully you may find a clue/s hidden on it. "
+
+
+after scan qr code:
+https://www.yogile.com/6qpgu2a03mj#21t
+password: 4X-EHB-4X-EKP
+
+strings the .jpg file, get a pastebin link
+https://pastebin.com/R9Ckf6zA
+
+
+scan the bar code on right side of boarding pass, get pastebin password
+%@xNwvfD%4KCBPS3
+
+(bar code on the right cant be scanned on my phone app)
+
+ASCWG{P4l3571N3_WiLL_B3_4LwaYs_FrE3}
