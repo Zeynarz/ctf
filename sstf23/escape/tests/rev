@@ -1,0 +1,32 @@
+Examining the sock_filter object using this example
+https://github.com/gebi/teach-seccomp/blob/master/step-2/example.c
+
+
+prctl@plt (
+   $rdi = 0x0000000000000016,
+   $rsi = 0x0000000000000002,
+   $rdx = 0x00007fffffffdbe0 → 0x000000000000000f,
+   $rcx = 0x00007ffff7edcd3e → <prctl+14> cmp rax, 0xfffffffffffff001
+)
+
+gef➤  x/2gx 0x00007fffffffdbe0
+0x7fffffffdbe0: 0x000000000000000f      0x00007fffffffdbf0
+
+gef➤  x/24wx 0x00007fffffffdbf0
+0x7fffffffdbf0: 0x00000020      0x00000004      0x00010015      0xc000003e
+0x7fffffffdc00: 0x00000006      0x00000000      0x00000020      0x00000000
+0x7fffffffdc10: 0x01000015      0x0000000f      0x00000006      0x7fff0000
+0x7fffffffdc20: 0x01000015      0x000000e7      0x00000006      0x7fff0000
+0x7fffffffdc30: 0x01000015      0x0000003c      0x00000006      0x7fff0000
+0x7fffffffdc40: 0x01000015      0x00000000      0x00000006      0x7fff0000
+gef➤
+0x7fffffffdc50: 0x01000015      0x00000001      0x00000006      0x7fff0000
+0x7fffffffdc60: 0x00000006      0x00000000      0x01be3700      0x12cf5acc
+0x7fffffffdc70: 0xffffe0a0      0x00007fff      0x555554da      0x00005555
+0x7fffffffdc80: 0xffffe198      0x00007fff      0xf7faf9b8      0x00000001
+0x7fffffffdc90: 0xf7ffd9e8      0x00007fff      0xf7ffe4f8      0x00007fff
+0x7fffffffdca0: 0x00000000      0x00000000      0xf7fce1b8      0x00007fff
+
+
+can see the allowed syscalls having the pattern
+0x01000015      syscallNum      0x00000006      0x7fff0000

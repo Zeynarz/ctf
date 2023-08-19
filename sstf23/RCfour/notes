@@ -1,0 +1,1 @@
+pretty sure RC4 justs generates a keystream, then xor the pt with the key

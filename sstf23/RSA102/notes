@@ -1,0 +1,27 @@
+I really have no idea on how to solve this.
+So I went on to look at the tutorial guide for the first time in this ctf
+And the solution is actually very very cool
+
+Its called the RSA common modulus attack
+c1 * c2 mod n = (m ** e1)(m ** e2) mod n = m ** (e1+e2) mod n
+If there's a way to get e1+e2 mod n = 1, then that would be great
+since both e1 and e2 are primes, gcd(e1,e2) = 1
+
+So we can use extended gcd to find u and v, such that
+u(e1) + v(e2) = 1
+
+Thus when we do c1**u * c2**v mod n, we get
+(m**e1)**u * (m**e2)**v mod n = m ** (u*e1) * m ** (v*e2) mod n 
+which is equals to
+m ** (u*e1 + v*e2) mod n
+
+which is just
+m mod n
+
+very very cool.
+
+
+
+
+
+(I skipped to the final quiz part as there's only 40 mins left in the ctf, maybe I should try quiz #1 and quiz #2 too soon)

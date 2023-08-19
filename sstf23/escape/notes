@@ -1,0 +1,89 @@
+format string chall
+main = 0x555555555509
+
+seems like the syscalls:
+execve
+openat
+chmod
+chown
+lchown
+fchdir
+
+are not allowed? or allowed?
+not allowed
+
+vagrant@ubuntu-focal:~/ctf/sstf23/escape$ seccomp-tools dump ./escape
+ line  CODE  JT   JF      K
+=================================
+ 0000: 0x20 0x00 0x00 0x00000000  A = sys_number
+ 0001: 0x35 0x0b 0x00 0x40000000  if (A >= 0x40000000) goto 0013
+ 0002: 0x15 0x0a 0x00 0x0000003b  if (A == execve) goto 0013
+ 0003: 0x15 0x09 0x00 0x00000142  if (A == execveat) goto 0013
+ 0004: 0x15 0x08 0x00 0x00000101  if (A == openat) goto 0013
+ 0005: 0x15 0x07 0x00 0x00000002  if (A == open) goto 0013
+ 0006: 0x15 0x06 0x00 0x0000005a  if (A == chmod) goto 0013
+ 0007: 0x15 0x05 0x00 0x0000005b  if (A == fchmod) goto 0013
+ 0008: 0x15 0x04 0x00 0x0000005c  if (A == chown) goto 0013
+ 0009: 0x15 0x03 0x00 0x0000005d  if (A == fchown) goto 0013
+ 0010: 0x15 0x02 0x00 0x0000005e  if (A == lchown) goto 0013
+ 0011: 0x15 0x01 0x00 0x00000050  if (A == chdir) goto 0013
+ 0012: 0x15 0x00 0x02 0x00000051  if (A != fchdir) goto 0015
+ 0013: 0x06 0x00 0x00 0x00000000  return KILL
+ 0014: 0x06 0x00 0x00 0x7ff00000  return TRACE
+ 0015: 0x06 0x00 0x00 0x7fff0000  return ALLOW
+
+
+
+the challange is essentially:
+1. use format string vuln to write instructions at 0x50510000
+2. write done to execute the instructions
+3. can't use execve etc shell code
+
+
+our first 8 bytes of input on the stack can be accessed through %8$p
+
+since its a printf, can't rly put null bytes
+So we put the addr at the end of our input
+we have to start at address 0x50510101 too
+
+
+for some reason there is just a problem at writing to 0x5051010a?
+ohhh, cause its a newline byte prob, so when writing the format str, everything that comes
+after 0xa isn't read
+
+
+cant use open and openat
+Looked around here:
+https://chromium.googlesource.com/chromiumos/docs/+/master/constants/syscalls.md
+
+and found open_by_handle_at,name_to_handle_at
+gonna try it
+
+failed using name_to_handle_at
+
+
+from https://osilayer8.makerforce.io/crossctf-quals2018/pwn/impossible_shellcoding/:
+There is another syscall called open_by_handle_at that I wanted to use, but for it to work the binary had to be root (I wasted 5 hours on this).
+
+Gonna try the method mentioned in the writeup
+Never heard of this method before, sounds pretty cool
+
+seccomp works by checking syscall numbers, and 32 bit syscall numbers are different
+compared to 64 bit syscall numbers. If we can execute in 32 bit, we can bypass seccomp
+And we can do that using retf
+
+Feels like this method is very very overpowered
+
+
+They banned 0x5a prob cause its mmap in 32 bit
+
+
+orw flag works in local but not remote.
+Maybe its not called flag?
+I tried /flag but it doesnt work too
+
+
+then I thought maybe the file descriptors are different, so instead of 
+mov ebx,3 before the read syscall, I just used mov ebx,eax
+
+and it worked

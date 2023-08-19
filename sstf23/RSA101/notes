@@ -1,0 +1,19 @@
+Chosen Message Signature Attack
+
+https://crypto.stackexchange.com/a/35656/87098
+This answer explains it very well
+
+To get m**d mod n
+you first get s1 = m1 ** d mod n,  m2 = m*inv(m1)
+then get      s2 = m2 ** d mod n
+
+then to get s, s = s1*s2 mod n
+
+
+This is because
+s2 = s1*s2 mod n
+s2 = (m1 ** d) * (m*inv(m1))**d mod n
+s2 = m1 ** d * inv(m1) ** d * m ** d mod n
+s2 = (m1 * inv(m1)) ** d * m ** d mod n
+s2 = 1 **d * m ** d mod n
+s2 = m ** d mod n
