@@ -1,0 +1,44 @@
+gdb aslr off:
+main = 0x5555555554c0
+algo = 0x555555555420
+
+in algo:
+local_1c = 0x7fffffffe04c
+
+what we can do is just write size=-1 when mmap is called when initializing own flash memory
+that way, mmap fails, but the address is still there, and we can write/read to the memory
+
+
+just need to reverse the algo1 function, so that I can write where memory at the flash memory
+and then just load it into memory
+
+maybe I can even just make ownFlashMemory point to libc?
+
+wait but, the initial flash addresses are calculated using n=8 for algo
+but ownFlashAddr is calculated at n=len(privKey)
+
+
+mmap can't satisfy size 0x80000000
+
+so we set size = 0x80000000
+and when writing, we set index=-0x1000
+so write(1,(newOwnFlash-0x1000),0x7ffff000);
+
+so we have to set newOwnFlash = targetFlash+0x1000
+
+cant set it to 0x80000000 cause keep becoming
+0xffffffff80000000
+
+-999999383011329
+
+
+
+wait I just realized
+I dont need mmap to fail for this to work
+I just need the addresses to collide
+lol
+
+
+
+
+Huge thanks to @lkron for helping me with the z3 stuff, he helped me a lot for implementing the revAlgo function
