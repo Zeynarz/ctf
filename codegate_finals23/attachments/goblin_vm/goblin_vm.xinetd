@@ -1,0 +1,12 @@
+service goblin_vm
+{
+    disable = no
+    flags = REUSE
+    socket_type = stream
+    protocol = tcp
+    user = ctf
+    wait = no
+    server = /home/ctf/run.sh
+    type = UNLISTED
+    port = 8888
+}

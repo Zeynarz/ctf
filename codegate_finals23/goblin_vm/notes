@@ -1,0 +1,102 @@
+gdb aslr Off,
+main = 0x555555555682
+&room = 0x555555558058 (PIE + 0x4058)
+
+big room larger malloc chunk
+If small room, room = 0x00007ffff7d11010
+If big   room, room = 0x00007ffff7b91010
+
+the malloc size is so big that it doesnt have space to allocate at heap location
+so mmap is called I think
+
+
+seems like the vm memory is in heap
+and vm code is in stack
+reg is a global variable
+
+
+seems like the instructions are written like:
+1 2 3 4 5 6 etc
+(only have 11 opcodes)
+
+
+Can set room and reg anywhere
+and can set *room = reg
+plus        *reg = room
+
+but there's PIE,ASLR
+but since room is so close to libc, prob can find leaks ez
+
+
+no exit call as well, so prob need to overwrite ret and do rop
+but for that, need to leak stack
+
+
+
+Leaks
+---------
+since libc is so close, we dont rly need a libc leak, and can just use relative offsets
+
+to get unlimited leaks
+you need to overwrite 1. global var 2. stack var 3. heap chunk
+actually we can overwrite the ptr pointing to the heap chunk, so we just need to overwrite
+1. global var
+2. stack var
+
+
+wait, since we alr can write libc addresses using relative offsets
+we just need a stack leak
+and to get that, we can just use environ, then rop main.
+room + 2773488 = environ
+
+wait but to actually set room = stack, need to know pos of libc
+
+
+
+maybe there's a way to overwrite a libc structure with system etc, and system(b"/bin/sh")
+maybe stdout vtable?
+
+could overwrite stdout file structure
+maybe can point to own vtable
+
+thought of this idea, and googled it
+found:
+https://github.com/mahaloz/ctf-wiki-en/blob/master/docs/pwn/linux/io_file/fake-vtable-exploit.md
+
+so prob could
+1. store a libc address in reg
+2. move room to stdout file structure
+3. overwrite the vtable with reg
+4. overwrite _IO_FILE_PLUS with "sh\x00"
+
+
+Fatal error: glibc detected an invalid stdio handle
+
+doesnt work now.
+bruh
+
+
+
+
+WAIT, exit handler is called when main rets?
+
+try overwriting exit handler?
+cant, need 2 leaks. bruh
+maybe I can overwrite the fs:0x30 = 0?
+we can prob get a way to overwrite stack ret, if ret, if we just 3
+
+was struggling to find fs:0x30, then saw this writeup
+https://ctftime.org/writeup/36064
+
+
+for some reason on remote, stuff are a bit different
+the offset of system is different?
+only found this when debugging in remote
+leak problem prob
+unreliable leak
+
+yup, leak was very unreliable
+leak file function in vtable instead
+
+much more reliable
+others prob based on like other factors

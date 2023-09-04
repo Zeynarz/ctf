@@ -1,0 +1,19 @@
+null byte overwrite ?
+
+
+notepad 0x100 bytes, then write next to it is expression
+read wont null byte intiialize right?
+
+buffer overflow in note function
+just need libc leak now
+
+the calculator checks for alphanumeric?
+I typed "A+1" into the calc and got a leak lol
+very cool
+
+
+during the buffer overflow
+$rdi   : 0x00007fffffffbe00  →  0x00007ffff7df70d0  →  <funlockfile+0> endbr64
+
+
+so we can just ret to a putsPlt and ret back to _start
