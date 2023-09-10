@@ -1,0 +1,10 @@
+version: "3"
+services:
+  maria:
+    build: .
+    ports:
+      - "30002:30002"
+    expose:
+      - "30002"
+
+    network_mode: "host"

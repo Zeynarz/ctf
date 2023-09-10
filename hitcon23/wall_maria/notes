@@ -1,0 +1,32 @@
+from what I understand, we have full control over our physical address in the vm?
+and can use devmem to write to it and read from it?
+
+devmem width is in bits prob
+
+is the pci struct in host memory? or what? 
+maria object is in qemu process memory
+
+
+pieBase = 0x55641e7be000
+buffer = 0x55642250d1a0,  pieBase+0x3d4f1a0
+
+buffer+0x2000+0x48 = mmio+0x48 = read/write function pointers
+buffer+0x2000+0x50 = mmio+0x50 = opaque = first arg passed into the read write
+
+
+
+(gdb) info proc
+process 15
+cmdline = '/home/user/qemu-system-x86_64 -L /home/user/bios -kernel /home/user/bzImage -initrd /home/user/initramfs.cpio.gz -cpu kvm64,+smep,+smap -monitor none -m 1024M -append console=ttyS0 oops=panic panic=1 quiet -monitor /dev/null -nographic -no-reboot -net user -net nic -device e1000 -device maria -sandbox on,obsolete=deny,elevateprivileges=deny,spawn=deny,resourcecontrol=deny'
+cwd = '/'
+exe = '/home/user/qemu-system-x86_64'
+
+I can prob just view the flag?
+no need to execute chroot or anything
+found an absolute banger of a gadget
+
+0x00000000007bce54 : push rax ; pop rsp ; nop ; pop rbp ; ret
+
+we can control rax with opaque, since when the function is called
+both rdi and rax = opaque
+

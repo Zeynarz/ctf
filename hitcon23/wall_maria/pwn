@@ -1,0 +1,17 @@
+#!/bin/bash
+gcc exploit.c -o exploit -static
+
+# local
+mv ./exploit ./initramfs/root/
+cd initramfs
+pwd
+find . -print0 \
+| cpio --null -ov --format=newc \
+| gzip -9 > initramfs.cpio.gz
+mv ./initramfs.cpio.gz ../
+
+cd ..
+sudo docker cp initramfs.cpio.gz 1328c53676f9:/home/user/initramfs.cpio.gz
+
+
+nc 0.0.0.0 30002
