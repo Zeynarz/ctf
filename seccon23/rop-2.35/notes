@@ -1,0 +1,4 @@
+leak libc, and just use libc gadgets?
+
+buf = 0x00007fffffffe260
+ret = 0x00007fffffffe278

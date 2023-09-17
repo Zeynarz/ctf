@@ -1,0 +1,49 @@
+exploit gdb aslr off,
+ctx = 0x7fffffffe260
+
+
+http://www.c-jump.com/CIS77/ASM/DataTypes/T77_0230_bswap.htm
+bswap = swap endianness
+
+
+the first instruction must be a endbr64
+
+[+] In '/home/vagrant/ctf/seccon23/selfcet/xor'(0x401000-0x402000), permission=r-x
+  0x401000 - 0x401010  →   "\xf3\x0f\x1e\xfa[...]" X
+  0x4010c0 - 0x4010d0  →   "\xf3\x0f\x1e\xfa[...]" X
+  0x4010f0 - 0x401100  →   "\xf3\x0f\x1e\xfa[...]" X
+  0x4012b0 - 0x4012c0  →   "\xf3\x0f\x1e\xfa[...]" X
+
+
+if I manage to get a libc leak and continue execution, would be able to just ret to system
+fredd suggested this and made me refocus on looking for leaks
+
+
+err leaks stuff, but exits right after
+0x1555553fff40?
+got lucky cause I just sent padding and didnt overwrite throw and discovered this
+
+leak was from __vwarn_internal
+but its a bit too far from err
+
+maybe find another func? so that can 1 byte brute?
+
+__GI_vwarnx?
+4 bits brute
+
+
+just solved it, and looking back, it was really lucky for me that in pwntools gdb aslr off,
+err was at 0x1555554001d0, and after I tried looking for nearby functions at 0x1555554001**,
+I looked for further functions at 0x155555400000, which is just where __GI_vwarnx was at.
+
+for example if I was looking for nearby functions using just gdb aslr off,
+err will be at 0x7ffff7ea91d0, and I would start looking at 0x7ffff7ea0000, which is very far
+off from __GI_vwarnx at 0x7ffff7ea9000
+
+I actually was already looking for nearby functions, but I started out using gdb aslr off,
+and was just lost in all those functions. But when I came back from dinner and fredd brought back my 
+focus to leaking, I coincidentally forgot I wrote "io.send(padding)" only, and put the got address
+as padding, and ran it, and got a leak (I was about to test the putspent function)
+
+so yeah. Quite lucky. Very cool.
+Thanks fredd.

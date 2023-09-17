@@ -1,0 +1,7 @@
+teammate @fredd said that you could access memory maps with /proc/self/map_files/55dfe5184000-55dfe5185000
+another teammate @Lio346 found that /proc/self/syscall seems to have a const offset from the flag.txt
+
+so just need to find the offset using the docker container, which is 958339
+
+and just use /proc/self/syscall to leak address, then add the last address with 958339,
+and just use /proc/self/map_files/... to get flag
