@@ -1,0 +1,35 @@
+n isn't initialized in getline
+its prob a uninitialized var vuln
+
+getline@plt (
+   $rdi = 0x00007fffffffe228 → 0x0000000000000000,
+   $rsi = 0x00007fffffffe1f0 → 0x0000000000000008,
+   $rdx = 0x00007ffff7fa1aa0 → 0x00000000fbad208b,
+   $rcx = 0x00007fffffffe1f0 → 0x0000000000000008
+)
+
+Ya there's definetely a buffer overflow here
+
+oh, getline allocates a buffer on the heap, and puts the address into rdi
+and the size inputted is stored in n?
+
+
+the struct is at 0x7fffffffe220
+
+
+getline doesn't check for the heap structure
+or maybe it checks the size of the chunk not so thoroughly
+oh, or maybe cause n is initialized to 8, so getline assumes that the chunk is 8 bytes
+
+
+max write 6 bytes, otherwise realloc will be called, and 
+ realloc(): invalid pointer
+
+
+use libc.rip to find libc
+a lot of libcs didnt work
+
+just gonna guess that they use ubuntu 22.04 too
+since the __libc_start_call_main same as mine
+
+yup, its ubuntu 22.04

@@ -1,0 +1,65 @@
+It's packed/compressed with smthg called UPX
+there's no PIE section, its all just 
+
+0x00007f0221b28000 0x00007f0221b2b000 0x0000000000000000 rw-
+0x00007f0221b2b000 0x00007f0221b53000 0x0000000000000000 r-- /usr/lib/x86_64-linux-gnu/libc.so.6
+0x00007f0221b53000 0x00007f0221ce8000 0x0000000000028000 r-x /usr/lib/x86_64-linux-gnu/libc.so.6
+0x00007f0221ce8000 0x00007f0221d40000 0x00000000001bd000 r-- /usr/lib/x86_64-linux-gnu/libc.so.6
+0x00007f0221d40000 0x00007f0221d44000 0x0000000000214000 r-- /usr/lib/x86_64-linux-gnu/libc.so.6
+0x00007f0221d44000 0x00007f0221d46000 0x0000000000218000 rw- /usr/lib/x86_64-linux-gnu/libc.so.6
+0x00007f0221d46000 0x00007f0221d53000 0x0000000000000000 rw-
+0x00007f0221d5e000 0x00007f0221d60000 0x0000000000000000 rw-
+0x00007f0221d60000 0x00007f0221d62000 0x0000000000000000 r-- /usr/lib/x86_64-linux-gnu/ld-linux-x86-64.so.2
+0x00007f0221d62000 0x00007f0221d8c000 0x0000000000002000 r-x /usr/lib/x86_64-linux-gnu/ld-linux-x86-64.so.2
+0x00007f0221d8c000 0x00007f0221d97000 0x000000000002c000 r-- /usr/lib/x86_64-linux-gnu/ld-linux-x86-64.so.2
+0x00007f0221d97000 0x00007f0221d98000 0x0000000000000000 ---
+0x00007f0221d98000 0x00007f0221d9a000 0x0000000000037000 r-- /usr/lib/x86_64-linux-gnu/ld-linux-x86-64.so.2
+0x00007f0221d9a000 0x00007f0221d9c000 0x0000000000039000 rw- /usr/lib/x86_64-linux-gnu/ld-linux-x86-64.so.2
+0x00007f0221d9d000 0x00007f0221d9e000 0x0000000000000000 r--
+0x00007f0221d9e000 0x00007f0221d9f000 0x0000000000000000 r-x
+0x00007f0221d9f000 0x00007f0221da1000 0x0000000000000000 r--
+0x00007f0221da1000 0x00007f0221da3000 0x0000000000000000 rw-
+0x00007f0221da4000 0x00007f0221da5000 0x0000000000000000 r-- /home/vagrant/ctf/blackhatMEA23/memstream/memstream
+0x00007ffc72f5b000 0x00007ffc72f7c000 0x0000000000000000 rw- [stack]
+0x00007ffc72fbf000 0x00007ffc72fc3000 0x0000000000000000 r-- [vvar]
+0x00007ffc72fc3000 0x00007ffc72fc5000 0x0000000000000000 r-x [vdso]
+0xffffffffff600000 0xffffffffff601000 0x0000000000000000 --x [vsyscall]
+
+
+gdb aslr off,
+g_buf =  0x7ffff7ffb060
+stdout = 0x7ffff7f99780
+0x00007ffff7ffb000 0x00007ffff7ffd000 0x0000000000000000 rw-
+
+So we can't pretty much overwrite anything we want.
+It's just that we have no leak
+
+
+I can prob leak stuff by overwriting stdout tho
+like the method pepsipu taught me.
+
+
+pepsi told me that its overwriting WRITE_END, but according to the FILE struct definition,
+it feels like he's overwriting WRITE_PTR
+
+
+After leaking, just overwrite TCB pointer_guard, and then just abuse exit handlers
+
+
+
+Im just gonna assume that this chall uses the same libc as before, which is ubuntu 22.04's default libc
+since the vmmap lines there show /usr/lib/x86_64-linux-gnu/ld-linux-x86-64.so.2
+
+
+
+the TCB structure isn't in libc, but its right above libc?
+
+
+why are like the offsets in aslr=False are different from the offsets in aslr=True
+
+
+the offsets are differenet in the remote server as well
+you prob have to find the offsets using the docker setup given
+
+for this version,
+exit = libcBase + 0x455f0
