@@ -1,0 +1,15 @@
+format string vuln in secretJuice
+and also buffer overflow in secretJuice
+secretJuice() is not gatekeeped as well, so you can keep calling it
+
+you can malloc after malloc since you can choose unlimited juices
+
+the intended solution is definetely house of orange
+
+the thing is only 0x120 sized chunks can be used
+
+wait can I just use the format string vuln to cheese the challange, and overwrite free_hook? 
+since I have all the leaks in the world?
+
+wait no you can't do that since you can't write null bytes
+wait no, YOU CAN do it, just leave the address at the end

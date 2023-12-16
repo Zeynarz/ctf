@@ -1,0 +1,8 @@
+if its an object*, and you want to access the property, you use object->property right?
+
+if its just an "object", and you want to access its property, just use object.property right?
+
+it hit the time limit, do I need to use dynamic programming?
+maybe I need to store the totalmem of a process once I calculated it, that prob will help reduce the time
+
+yup, that works

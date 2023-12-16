@@ -1,0 +1,9 @@
+format string vuln, could prob leak secret message there
+format string vuln not enough to overwrite stuff yet prob
+
+its the buffer overflow that allows us to get shell
+
+leak secret by using %6$s
+
+rmb that the first few args are rdi,rsi,rdx etc, then only use stack
+%15$p to leak libc
