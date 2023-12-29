@@ -1,0 +1,12 @@
+no pop rdi gadgets, and after the gets, during the ret we control, rdi has a pointer to null bytes
+but i observed that:
+$rdi   : 0x00007fffffffbfe0  →  0x00007ffff7df50d0  →  <funlockfile+0> endbr64
+
+after printf is called, so we prob can just call printf, and then printf again to leak
+its a stack address, afterwards it changed to _rtld_global
+
+
+for some reason on remote the offset is off by 0x2000???
+used p64(libc.symbols["gets"]) and kept messing around the offset to find this out
+
+maybe its cause stack leak diff stuff cause of env vars? idk

@@ -1,0 +1,42 @@
+I think this works:
+
+'a\' ... ' ... '\a'
+
+just have to make sure that the whole thing is odd length
+and the code is put in the second ...
+and the palindrome of the code is put in the first ...
+and have to make sure that the sum of all chars % 256 == 69
+
+nvm it doesnt work, eval only evaluates expressions, and this is not an expression
+unless we use add?
+YUP THAT WORKS, niceuuuuuuu.
+
+thanks stackoverflow
+https://stackoverflow.com/questions/22558548/eval-syntaxerror-invalid-syntax-in-python
+
+for some reason chars like t etc doesn't work rly
+
+
+wait I didn't realise the no more than 35 chars thing
+I have to somehow shrink the exploit to only 35 chars
+
+oh wait its a while loop dude
+I can store my input in like a variable first, then only eval it after
+oh wait no it has to be an expression AHHHHHHHHHHH
+
+
+https://stackoverflow.com/questions/45623064/defining-a-variable-without-using-the-equal-sign
+yo hold up
+
+
+'m!\'+)(tupni+'+input()+'\!m'
+'0\'+_+'+_+'\0'
+
+nah it doesn't work on scripts, ahh
+
+
+
+how do I remove two bytes from this:
+'0\'+))(tupni(lave+'+eval(input())+'\0'
+
+didn't manage to solve this chall, ahhh

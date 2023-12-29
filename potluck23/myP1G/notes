@@ -1,0 +1,183 @@
+its a vm chall
+threading with no locks, prob race condition?
+uninitialised var vuln with local_38?
+
+in ghidra, the larger the n in local_n, the larger the rbp-n when accesingg the variable
+
+rev
+------
+you have to first make a thread first before being able to write instructions
+to do that just type:
+thread
+
+the "threads"(heap chunks) are stored in global arr mcode
+the current amount of threads is stored in global int mcode_count
+there is also a global arr mcode_size that stores the current amount of bytes in each mcodes
+
+then to write the instructions, you can follow the form:
+p1 , p2 , p3 , p4
+
+there are also 8 registers, r1,r2,...,r8
+hex values can be up to 64 bits
+
+an instruction is parsed this way:
+instr+0x00: p1 (1 byte)
+instr+0x01: p2 (8 bytes)
+instr+0x09: p3 (8 bytes)
+instr+0x11: p4 (8 bytes)
+
+so each instruction object is 0x19 bytes
+
+after each instruction is parsed, the instructions are copied into their corresponding 
+threads' code region (heap chunk)
+
+
+so now more on the parsing of each instruction
+
+for instructions:
+    mov     : 1
+    sub     : 2
+    add     : 3
+    mul     : 4
+    sqr     : 5
+    shl     : 6
+    shr     : 7
+    and     : 8 // this comes first
+    or      : 9
+    alloc   : 11
+opcode , register , hex
+
+    and     : 10 // ???
+opcode , register  (idk what this instruction is on about, maybe its supposed to be alloc?)
+
+    write   : 12
+    read    : 13
+    copy    : 14
+opcode , register , register , hex
+
+    print   : 15
+opcode , register , hex , hex
+    
+    pause   : 16
+    lock    : 17
+opcode
+
+    unlock  : 18
+opcode , hex
+
+    mov2    : 19
+    and2    : 20
+    or2     : 21
+opcode , register , register    
+
+aight now actually look at how the instructions are performed/ran
+so for each mcode, a thread is ran
+a ptr to the mcode id is passed into the vm function for the vm to know which mcode to run
+
+question im asking is, are the regs shared across all threads?
+if they are, then we can prob make a race condition making reg be a pointer we can control
+and then have arbitary overwrite and read
+nvm they're not, since each thread will have its own stack
+https://www.backblaze.com/blog/whats-the-diff-programs-processes-and-threads/#:~:text=Distinguishing%20between%20these%20kinds%20of,but%20can%20access%20shared%20data.
+
+but all the threads share the heap tho
+
+we can get arbitary heap write and read alr since adding to the registers doesnt check if its a pointer etc
+
+
+understanding more abt the registers:
+I ran vmcode:
+alloc , r0 , 0x900
+alloc , r1 , 0x100
+...
+alloc , r8 , 0x800
+
+0x7ffff7d83da0: 0x00007ffff0000b70      0x00007ffff0001480
+0x7ffff7d83db0: 0x00007ffff0001590      0x00007ffff00017a0
+0x7ffff7d83dc0: 0x00007ffff0001ab0      0x00007ffff0001ec0
+0x7ffff7d83dd0: 0x00007ffff00023d0      0x00007ffff00029e0
+0x7ffff7d83de0: 0x00007ffff00030f0      0x0000000100000001
+0x7ffff7d83df0: 0x0000000100000001      0x0000000100000001
+0x7ffff7d83e00: 0x0000000000000001      0x0000000000000100
+0x7ffff7d83e10: 0x0000000000000200      0x0000000000000300
+0x7ffff7d83e20: 0x0000000000000400      0x0000000000000500
+0x7ffff7d83e30: 0x0000000000000600      0x0000000000000700
+0x7ffff7d83e40: 0x0000000000000800
+
+and look at that, there is memory overlap
+so *0x7ffff7d83de0 was supposed to store whether r0 and r1 are pointers, however, it got overwritten by r8
+the size of r0 chunk is also overwritten by the bool of r8 being a pointer or no
+
+so with this, we can actually control whether r0 and r1 are pointers, using r8
+thus we have arbitary write and read Im pretty sure
+
+
+exploitation
+---------------
+now all we need is some sort of leak
+a libc leak would be extremely nice, we can prob get that using like an unsorted bin chunk or smthg
+since we alr have arbitary read write over the heap
+
+it seems like the main process and the threads use diff heap spaces
+do the threads free the chunks after they join back with the main process?
+
+YO THERES A MAIN ARENA POINTER IN 0x7ffff00008a0
+
+wait u don't even have to print it right?
+u just have to pop it into the regs right?
+
+also, the ptrs in regs can just be overwritten using read i realised lol
+that's alr a vuln by itself, no need use the r8 thing
+
+OK, THE MAIN ARENA POINTER THING WORKS IN REMOTE TOO. LETS GO
+the libc used on remote is prob the same as mine, 2.35, since the main_arena leak when put into libc.rip gives the same
+output as me putting in my local main_arena
+prob same as ezrop libc as well
+
+prob gonna use exit handler exploit method, but it exploits using the TLS tho
+if the thread turns into a shell, will i get a shell? lets try it in gdb first
+
+wow the exit_funcs object thing has a symbol name now
+0x7ffff7fa2f00 <initial>:       0x0000000000000000      0x0000000000000001
+0x7ffff7fa2f10 <initial+16>:    0x0000000000000004      0xb0e5560fa3fd4639
+
+also from libc to the thread's tls offset is prob constant right?
+does the thread exit?
+wait nvm, I can just overwrite the main thread's tls right?
+
+ya in main thread, fs_base= 0x7ffff7d85740
+   in  thread 1  , fs_base= 0x7ffff7d84640
+
+I need to overwrite main thread tls, not thread 1 tls
+i don't even think thread 1 calls exit, its the main thread that calls exit
+
+it works in gdb, lets go then, just have to calculate offsets now
+
+main_arena = 0x7ffff7fa1c80
+ptr_guard  = 0x7ffff7d85770
+mangled_func = 0x7ffff7fa2f18
+func_arg   = 0x7ffff7fa2f20
+
+system = 0x7ffff7dd8d60
+binsh = 0x7ffff7f60698
+
+thank god for the write function for working by copying from register, into QWORD PTR[register]
+also thank you for having the shl instruction man holy, no need ror also so no need implement that
+
+
+so exploitation plan:
+1. get main_arena into r1,r2, make r1 into a ptr
+2. adjust r1 to func_arg, and adjust r2 to binsh
+   write r2 into r1
+3. adjust r1 into mangled_func, and adjust r2 to system, and shl r2 32 bits
+   write r2 into r1
+4. adjust r1 into ptr_guard
+   write r3 into r1
+5. profit
+
+
+failed on remote, prob need to leak more stuff to get libc confirmation
+nvm ima just build a docker container and try it there
+yup, that worked, nice!
+
+I installed gdb in the docker and ran just debugged my exploit and found offsets there
