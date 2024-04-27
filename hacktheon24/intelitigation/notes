@@ -1,0 +1,61 @@
+there are slight differences between the binaries given, for example,
+one time I got 
+oHoo&o=0@P`@Q15QW175sS=}U;53sy3YQQ;sw󙱹Y73qGCC:  in the binary, and the other time
+oHoo&o=0@P`@ї[_]UY};}suq={1_swSWUUU[q_Ss?GCC:
+
+just gonna ignore it for now ig
+
+wait, somehow, the canary is in there
+the different bytes are probably the canary
+
+its at index 12336:12344 of the binary
+nice
+
+(how does it do that tho? like setting the canary to a constant in the binary.
+ there's no null byte in the canary as well)
+
+(diffed the binaries cause was scared that they would send slightly different binaries each time.
+ turns out i was right)
+----------------------------------------------------
+
+gdb aslr off
+main @ 0x5555555553e5
+vuln @ 0x555555555324
+
+buf @ 0x7fffffffe020
+
+very small binary
+obvious buffer overflow
+has stack canary, but no pie and libc
+
+our input is repeated back to us, and since read doesn't append null byte iirc
+we can overwrite the ret value to ret back to the entry point of the binary,
+then the pie will be leaked to us as well, and then we'll have access to printf, and we can leak 
+libc that way, then rerun the binary and get a ret2libc
+
+can't ret to entry point since got \x00 byte, so can't leak pie
+so we'll just ret to main. Can't, movaps issue, let's just skip the endbr64 then
+
+overwriting 2 bytes would give us 1/16 chance of success since it overwrites 4 bits of pie
+overwriting 1 byte is sure hit win
+
+the problem is movaps issue, but what if we just ret to the "call vuln" instruction,
+since that will push a ret value onto the stack , and will align the stack
+
+yup, nice, it works!
+
+sometimes the canary is wrong on remote tho
+prob some index offset thing
+
+nice, when vuln returns, rdi points to a libc address (funlockfile)
+$rdi   : 0x00007fffffffbe50  →  0x0000155555340050  →  <funlockfile+0> endbr64
+
+
+yo you can use rop.rdi to find gadgets!!!
+then no need keep ROPgadget everytime to find gadgets and hardcode it into exploit
+that will take up a lot of time for when testing libcs
+
+just test the amd64 libcs, duh
+no need test the i386 ones
+
+finally found the correct libc lol
