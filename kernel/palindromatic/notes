@@ -1,0 +1,214 @@
+https://www.willsroot.io/2022/08/reviving-exploits-against-cred-struct.html
+https://blog.bi0s.in/2024/02/26/Pwn/bi0sCTF24-palindromatic/
+
+need to learn and understand more abt how the slabs work before reading the writeups I think
+before for the fire of salvation chall, not rly need understand so much abt how slabs work just like rly rly basics can dy, but for ths,its a cross cache attack, so prob need understand more abt slabs before reading the willsroot writeup
+
+ok I read the cache-of-castaways writeup, and gained a lot more of the knowledge required for this chall
+prob gonna read the writeup and see how the author exploits it
+(when the author says cache, they mean kmem_cache)
+
+---------------------------------------------------------------------------------------
+(find driver's .text base by looking at /sys/module/palindromatic/sections/.text)
+
+pm_ioctl: driver's .text base+0x860
+pm_add_request: base+0x1d0
+pm_sanitize_request: base+0x2e0
+pm_reset_request: base+0x460
+pm_process_request: base+0x5c0
+pm_reap_request: base+0x130
+pm_query_capacity: base+0xb0
+
+one request can only be sanitized once
+
+
+if lets say you add a request, and then the process that adds the request is ended
+the request will still be in the queue since, the kernel module keeps running throughout everything and doesn't restart
+
+
+I thought u could like predict which chunk the obj is gonna be allocated at,
+like its gonna be allocated at 0x0, then 0x400, then 0x800 and so on and so forth
+
+but its kinda random
+
+add_request()
+        layout:   0x000 0xffff88fd40a36000 (next: 0xffff88fd40a36400)
+                  0x001 0xffff88fd40a36400 (next: 0xffff88fd40a37800)
+                  0x002 0xffff88fd40a36800 (next: 0xffff88fd40a37c00)
+                  0x003 0xffff88fd40a36c00 (next: 0xffff88fd40a37000)
+                  0x004 0xffff88fd40a37000 (next: 0xffff88fd40a36800)
+                  0x005 0xffff88fd40a37400 (in-use)
+                  0x006 0xffff88fd40a37800 (next: 0x0)
+                  0x007 0xffff88fd40a37c00 (next: 0xffff88fd40a36000)
+
+add_request()
+        layout:   0x000 0xffff88fd40a36000 (next: 0xffff88fd40a36400)
+                  0x001 0xffff88fd40a36400 (next: 0xffff88fd40a37800)
+                  0x002 0xffff88fd40a36800 (next: 0xffff88fd40a37c00)
+                  0x003 0xffff88fd40a36c00 (in-use)
+                  0x004 0xffff88fd40a37000 (next: 0xffff88fd40a36800)
+                  0x005 0xffff88fd40a37400 (in-use)
+                  0x006 0xffff88fd40a37800 (next: 0x0)
+                  0x007 0xffff88fd40a37c00 (next: 0xffff88fd40a36000)
+
+add_request()
+        layout:   0x000 0xffff88fd40a36000 (next: 0xffff88fd40a36400)
+                  0x001 0xffff88fd40a36400 (next: 0xffff88fd40a37800)
+                  0x002 0xffff88fd40a36800 (next: 0xffff88fd40a37c00)
+                  0x003 0xffff88fd40a36c00 (in-use)
+                  0x004 0xffff88fd40a37000 (in-use)
+                  0x005 0xffff88fd40a37400 (in-use)
+                  0x006 0xffff88fd40a37800 (next: 0x0)
+                  0x007 0xffff88fd40a37c00 (next: 0xffff88fd40a36000)
+
+add_request()
+        layout:   0x000 0xffff88fd40a36000 (next: 0xffff88fd40a36400)
+                  0x001 0xffff88fd40a36400 (next: 0xffff88fd40a37800)
+                  0x002 0xffff88fd40a36800 (in-use)
+                  0x003 0xffff88fd40a36c00 (in-use)
+                  0x004 0xffff88fd40a37000 (in-use)
+                  0x005 0xffff88fd40a37400 (in-use)
+                  0x006 0xffff88fd40a37800 (next: 0x0)
+                  0x007 0xffff88fd40a37c00 (next: 0xffff88fd40a36000)
+
+add_request()
+        layout:   0x000 0xffff88fd40a36000 (next: 0xffff88fd40a36400)
+                  0x001 0xffff88fd40a36400 (next: 0xffff88fd40a37800)
+                  0x002 0xffff88fd40a36800 (in-use)
+                  0x003 0xffff88fd40a36c00 (in-use)
+                  0x004 0xffff88fd40a37000 (in-use)
+                  0x005 0xffff88fd40a37400 (in-use)
+                  0x006 0xffff88fd40a37800 (next: 0x0)
+                  0x007 0xffff88fd40a37c00 (in-use)
+
+so I understand why the author needs to spray and check which req is corrupted now
+since its random
+
+there's 8 objects in one slab?
+
+~ # cat /proc/slabinfo
+slabinfo - version: 2.1
+# name            <active_objs> <num_objs> <objsize> <objperslab> <pagesperslab>
+palindromatic          8      8   1024    8    2
+
+oh wow theres 2 pages in each slab, so each slab requires order-1 pages
+
+then I can't really do the overwriting cred structure now right?
+
+sanitized can only be called once
+
+
+
+Stage 2 of author's exploit:
+So now since everything is freed in the palindromatic slab, the order-1 page is returned to the buddy allocator
+But now we have a pointer pointing to somewhere in that order-1 page stored in incoming_queue
+
+what the author does is spray pipe_buffer objects, so that a pipe buffer allocation would trigger a request to get
+an order-1 page, and get the page that we just returned to the buddy allocator
+
+(more on this part, like, is it kmalloc-1k? so yea order-1 pages prob. does pipe allocate any other objects beside pipe_buffer? prob no? check using gdb slub-info and pipe calls)
+
+And now we can use our uaf to free the pipe_buffer object, and have UAF over a pipe_buffer object now
+
+the author then sprays more pipe_buffer objects to occupy the slot of the freed pipe_buffer object, and write diff contents
+to the pipes in the second spray. So now two pipe_buffer is using the same memory.
+
+He then checks the pipe_buffer objects sprayed in the first spray to find which pipe was freed.
+
+He does this so that he can get arbitary write over the pipe_buffer flags, so that he can add the PIPE_BUF_FLAG_CAN_MERGE flag
+If the pipe is spliced from a readonly file, writing to this pipe with this flag on will now actually write to the file
+So giving you arbitary write to a normally readonly (to u) file.
+
+
+
+- learn more abt the pipe buffer object and how it works
+- learn more abt the pipe buffer slabs
+
+so its the data is not stored at pipe buffer, but the ptr will be changed pointing to another one
+
+so the kernel stores what u write into the pipe in a buffer, until its read
+and there's this thing called ring of pipe structs?
+need see pipe internals
+
+
+so learning/learned more about kernel objects:
+- msgmsg
+- cred/task struct
+- and now pipes
+
+how to see CONFIG_STATIC_USERMODEHELPER?
+
+
+somehow its writing to the terminal? did I overwrite like the tty object or smthg?
+yeah when i don't spray that much, no BBBBBBBs pop up
+
+
+
+the queue should be at .bss right?
+yup, just look at /sys/module/palindromatic/sections/.bss to find the queue
+
+the incoming queue reqs property is at the addr shown in /sys/module/palindromatic/sections/.bss + 0x860
+makes sense since the start of outgoing queue reqs property is at +0x28, and there's 0x100 ptr entries in a queue, 
+so the next queue should start at +0x800smthg
+
+actual object is at +0x840
+
+for some reason I just can't get the pipe allocated at the freed request
+Gonna look at the author's exploit and see how he does this part.
+aint he doing the same thing as me?
+
+oh wait is it because he set the affinity to only one cpu? so it only uses one cpu and the cache is consistent?
+wills root didnt do that tho
+might be some trick, ask him next time
+
+
+why am I doing the same thing but its not working?
+
+
+
+void setaff(int cpu)
+{
+    cpu_set_t my_set;
+    CPU_ZERO(&my_set);
+    CPU_SET(cpu, &my_set);
+    if(sched_setaffinity(0, sizeof(cpu_set_t), &my_set) < 0) error("sched_setaffinity");
+    printf("[*] Pinned to CPU #%d\n", cpu);
+}
+
+setaff(0)
+
+from the man page https://man7.org/linux/man-pages/man3/CPU_SET.3.html:
+
+
+works when spray 0x100?
+       The cpu_set_t data structure represents a set of CPUs.  CPU sets
+       are used by sched_setaffinity(2) and similar interfaces.
+
+       CPU_ZERO()
+              Clears set, so that it contains no CPUs.
+
+       CPU_SET()
+              Add CPU cpu to set.
+
+https://man7.org/linux/man-pages/man2/sched_setaffinity.2.html:
+
+       A thread's CPU affinity mask determines the set of CPUs on which
+       it is eligible to run.
+
+
+I am pretty sure setaff just sets which cpus are used to run the process
+and this is done so that only one cpu is used to run.
+so im assuming that diff cpus have like diff kmem caches etc stuff
+
+
+
+ohhh, you need to double reset cause the pipe will overwrite the object metadata
+so u have to reset the metadata to RAW
+
+just tested his spray on my system, and dude why does his spray work and mine doesnt?
+
+
+once I changed my PM_SPRAY from 50 to 0x100, the stage 2 of the exploit finally worked
+I think maybe what happened here is that Im able to take up and free more pages for the buddy allocator by 
+increasing the PM_SPRAY, and thus getting a higher chance of the pipe buffer overlap
+

@@ -1,0 +1,12 @@
+a queue of requests are made
+a request object is stored in the kernel cache
+
+queue->front stores the index of the first request object
+queue->rear stores the index of the last request object
+
+
+what's the size of arg_t?
+its supposed to be just a ptr to userspace?
+I am pretty sure that's the case
+
+kzalloc is just kmalloc but then afterwards zero out the chunk

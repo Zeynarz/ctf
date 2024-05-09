@@ -1,0 +1,10 @@
+learning more abt how kmalloc works with this:
+https://ruffell.nz/programming/writeups/2019/02/15/looking-at-kmalloc-and-the-slub-memory-allocator.html
+
+so slabs are just a big chunk of a lot of same sized chunks
+that can be utilised when the kernel wants to make an object (i think)
+
+one slab = one huge chunk of tiny chunks
+free object = free chunk essentially
+
+slab is the name of the huge chunk, its diff from SLAB, which is a mechanism

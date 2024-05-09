@@ -1,0 +1,17 @@
+notes about kernel pwn utilities
+------------------------------------
+a pwn player called @nasm suggested me to use https://github.com/bata24/gef for kernel pwn
+and man it actually has so many features and is so useful for debugging stripped vmlinuxes
+its actually so good, and has so many good features for kernel pwn
+it has like slub-dump and ksymaddr-remote which is so cool
+
+to make changes to the file system loaded (the .ext3 file), just mount it:
+sudo mount file.ext3 /mnt
+and edit/add the files in /mnt. very simple and convenient
+
+since the kernel binary has no symbols, I can't find whr the palindromatic kernel module functions are.
+but to find them, you can just take a look at
+/sys/module/palindromatic/sections/.text
+
+but you have to be root in order to view them, so just edit the uid in the init file at / in the ext3
+file system so that the uid is 0

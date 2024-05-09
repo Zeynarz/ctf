@@ -1,0 +1,128 @@
+user_rule_t is a format for the user to write what rules they want, and rule_t is the actual rule made from the user specifications
+the desc is 0x800 bytes, plus the other stuff, these rules are allocated in kmalloc-4k slabs prob
+
+i've reversed most of the kernel module, and understand where the vuln is.
+you can dup a rule, and then delete it, so that now you have a UAF to a freed rule
+so when an object reuses that kernel area, you have ~0x30 bytes of write into the kernel object
+
+what are the nf_hook_ops? seems like some netfiller stuff
+prob like, when smthg smthg happens with the netfiller, firewall_inbound_hook/firewall_outbound_hook will be called/invoked
+
+when the module is first loaded, init_firewall is called prob
+and when the module is removed, cleanup_firewall is called prob
+
+defined by
+module_init(init_firewall);
+module_exit(cleanup_firewall);
+
+and the fops of the device is setup in init_firewall too
+you have to declare the miscdevice too first tho
+and then after setting up everything, you have to misc_register(&firewall_device) for the user to be able to actually 
+interact with the device through /dev/firewall (cause the DEVICE_NAME is firewall) and do the fops etc I think
+
+
+"Once you allocate a few chunks to help smooth out the SLAB shuffling on the current slab, we can begin the exploitation procedure."
+So allocate a few kmalloc-4k slabs so that whenever we free a rule, we can correctly predict that the next msg_msg object will
+be in the chunk we just freed? I think thats what this means. To just fill up the before kmalloc-4k slab stuff and make stuff
+consistent 
+
+alright so I think I understand how the kernel module works, and also whr the vuln is, and how to use msg_msg to get arb read, not rly sure how it uses userfaultfd to get arb write tho (gotta figure that out), but understand how the exploit find the current cred object and rewrites it. I think I can rewrite an exploit myself pretty soon. Read the author's exploit and see how it works there first.
+
+the doubly linked list is for connecting msgs in a msg queue right?
+so diff msg queues won't be linked tgth by the linked lists right?
+
+dll prob means double linked lists
+ah so the author finds the double linked list of the init_task, and go backwards by following prev instead of next, to find the exploit's task object faster since the exploit is the latest task
+the dll is at task_struct+0x298, that's why the author arbitary reads at init_task+0x298
+
+when receiving, received+0xfd0 to get to the next segment, and +0x10 to get to prev prob
+the next and prev pointers don't point to the start of the task_structs, they point to the dll of the task_structs too im 
+pretty sure
+
+alright I think I kinda understand how the userfaultfd arbitary write thing works now,
+so userfaultfd is just used to hang/pause the kernel midway through something
+
+this is how it works:
+1. mmap a chunk at 0x1338000, and don't write to it at all.
+   I rmb seeing somewhere that if you don't write to it, the address won't actually be registered in the page table yet, and like
+   reading from it will cause a page fault 
+
+   mmap a chunk at 0x1337000, and write to it so that 0x1338000-0x8 is the start of a msg object
+
+2. setup a userfaultfd on address 0x1338000, so that when there's a page fault there, we can catch it using the userfaultfd
+3. send the msg at 0x1338000-0x8, so now the kernel will setup the msg_header and everything in the kernel memory, but then
+   when it tries to copy from 0x1338000 into the kernel memory, there will be a page fault.
+   so now the msg_header is initialised, but the kernel hangs right when its gonna copy stuff from 0x1338000 to the msg object
+4. catch the page fault using userfaultfd, and use our UAF to change the next pointer to where we want
+   also initialise 0x1338000 so that it won't page fault and its address is actually in the page table
+   setup what we want to write at 0x1338000+(0x1000-0x30)
+5. let go of the page fault, so that the kernel continues copying, but now, the msg_header is changed, and we write whatever we
+   want to wherever we want.
+6. profit
+
+
+so we need userfaultfd to hang the kernel at the exact timing that
+1. msg_header is initialised, but the msg content isn't copied yet
+
+if we don't use userfaultfd, send_msg would just immediately kmalloc somewhere, and copy contents to it
+we won't rly have control over where the msg is allocated and won't rly get arbitary right
+unless i mean maybe there's a way to add on to a msg, then you could maybe change the next ptr and add on to the msg to get
+arbitary write. but if there actually is such thing, then the author prob would've used that way
+
+
+I can prob confirm my assumptions by reading the msg ipc source code, but eh lets just trust my gut
+gonna research a bit more on how to use userfaultfd first tho
+
+
+wait, so its the user process thread that's executing the kernel instructions?
+every thread can do the mode switch to kernel through syscalls etc?
+i think so
+
+so when the page fault occurs, the thread thats currently executing the kernel instructions will hang
+i think
+
+read the man page for userfaultfd, usage part especially to get a clearer idea of how to use it
+
+
+once I actually understood these uffd basics and whats its actually used for, I can now actually read this to know how 
+to use uffd: https://github.com/smallkirby/kernelpwn/blob/master/technique/userfualtfd.md
+
+
+
+uffd is used to catch page faults of memory regions
+when a page fault happens, the thread execution stops
+but the other thread can keep going on and do stuff with the kernel etc, so like calling the kernel module functions to change kernel memory
+
+so to setup uffd to catch page faults of a memory region:
+1. call the syscall
+2. ioctl it with UFFDIO_API
+3. ioctl it with UFFDIO_REGISTER to register the memory region
+
+so now when a page fault happens in the memory region, 
+the thread will stop execution, and now an event happened in the uffd
+the other thread can poll the uffd (pause execution until an event happens in the uffd), so that when the event happens, the other thread can do the arb_write stuff
+
+the other thread uses UFFDIO_COPY to edit the memory region that causes the page fault
+this is done to not only setup the arb write contents, but also im pretty sure to setup the PTE for the memory region, so that it doesn't page fault again
+now to continue the code execution of the thread that page faulted,
+ioctl UFFDIO_UNREGISTER is called, and now both threads continue to run
+ 
+the og thread will continue execution, and the kernel code will continue to be ran, and the race thread will return and we will have done the arb_write
+
+so im pretty sure that a thread means like a thread of execution
+so thread runs both the userland code, and the kernel code
+since its all just a path of execution
+its just ring switches
+
+if i want to learn even deeper abt uffd, and like learn abt the codepath of the ioctl calls etc, I can look at the github MD.
+
+
+aight nice, time to rewrite the exploit myself.
+gonna try to look at the writeup or the author's exploit less now
+gotta check it to look at what flags they use etc
+
+gotta practice writing exploits and debugging kernel land
+
+gotta relearn when to use & etc for objects
+if you make a ptr to an object, you can edit it through -> right?
+if you make an object, you edit it through '.' right?
