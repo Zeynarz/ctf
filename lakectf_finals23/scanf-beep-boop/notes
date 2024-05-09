@@ -1,0 +1,7 @@
+there's probably like a flag in libc scanf, that makes it so that scanf keeps reading even after not getting what it wants
+
+can write, 0x30,0x31,0x0a
+
+solution is probably, overwrite the flags with one byte that allows us to keep reading next bytes
+
+some file struct exploitation stuff
