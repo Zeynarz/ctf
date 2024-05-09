@@ -1,0 +1,148 @@
+https://www.willsroot.io/2022/08/reviving-exploits-against-cred-struct.html
+https://github.com/Crusaders-of-Rust/corCTF-2022-public-challenge-archive/tree/master/pwn/cache-of-castaways
+
+was trying to do the bi0sctf24 palindromatic chall, and fredd mentioned that this chall was related to it
+
+this chall uses a cross-cache attack as well, so Im gonna read and understand this writeup first before I follow the palindromatic writeup
+
+before for the fire of salvation chall, I didn't rly need to understand how slabs work to understand the writeup,  since its just "allocating object at previously freed space". 
+But for this,its a cross cache attack, so prob need understand more abt slabs before I can actually understand the writeup
+
+
+
+learning more abt linux mm
+-----------------------------
+https://xidoo.top/2021/08/slab_buddy_system0/
+this blog post explains the buddy system and the SLUB system really well
+
+so the buddy system is used, where the smallest unit of memory is pages
+then since the memory allocated by the buddy system, the SLUB system is also used, to divide and allocate memory, intended for allocations of kernel objects
+
+there are a lot of structures in the implementation of the SLUB system 
+
+simplified explanation:
+there is a cache_chain which is just a double linked list of kmem_cache objects
+in every kmem_cache object, there are many slabs. A slab could be made up of one or more consecutive pages
+In the pages, there are many objects of the identical size
+
+(slabs are just consecutive pages, where kernel objects are stored. Sometimes it could be just a page as well)
+
+so for example, using the kmem_cache called "kmalloc-64" as example
+# name            <active_objs> <num_objs> <objsize> <objperslab> <pagesperslab>
+kmalloc-64          2624   2624     64   64    1
+
+there are 2624 objects allocated in the kmem_cache
+max number of objects that can be allocated in the kmem_cache is 2624
+size of each object is 64bytes, and there can be 64 objects in each slab
+there is only one page in each slab
+
+makes sense since 0x1000/64 = 64, so there can only be 64 objects of 64 bytes in a page
+2624/64=41 which means that there are 41 slabs in the kmem_cache
+
+so if more than 2624 objects are allocated, the buddy system will allocate a new slab for kmalloc-64
+since a slab is atleast a page, the buddy system can be utilised here
+
+(slabs all probably follow size of 2**n * PAGE_SIZE then right?)
+
+
+
+users (kernel module devs etc) can also use the APIs to create kmem_caches
+(ahh so thats what cache-of-castaways and palindromatic did)
+
+kmem_cache_create - creating kmem_cache
+kmem_cache_alloc - create kernel object in the kmem_cache
+kmem_cache_free - freeing kernel object in the kmem_cache
+
+kmalloc - allocate a object in kmalloc-***. Kernel will find a best matched kmem_cache, and if sizes required are more than the biggest size of them (8K), buddy system will help to allocator the memory directly.
+kfree - kernel will free the object and put the object ptr into a freelist
+
+
+(ahhhhh I seee, so kmalloc is just like a wrapper on using kmalloc kmem_caches)
+
+
+This part explains everything so so well:
+https://xidoo.top/2021/08/slab_buddy_system0/#details
+Everything comes full circle in this
+
+
+So in a kmem_cache object, there is a kmem_cache_cpu object, as well as (multiple?) kmem_cache_node object
+kmem_cache_cpu object points to like the "current" slab, and a kmem_cache_node object is like a slabs storage
+
+Trust me, just read this: https://xidoo.top/2021/08/slab_buddy_system0/#details
+The whole article just explains everything so nicely and simple to understand.
+Plus the article is so short too.
+
+
+Extra:
+- where is the head of the freelist for partial slabs? 
+- according to this: https://i.loli.net/2021/08/27/JKRCEhmqfXeTYZP.png
+  there are multiple kmem_cache_node objects in a kmem_cache right?
+
+
+The article also mentions modifying the fd pointer of the freelist in slabs to get arbitary write
+Also, if there is an overflow vuln, spray objects to fill up the gaps in between allocated objects in slabs, so that
+afterwards, the objects we allocate later on will be continuous
+(ahh so thats why these kernel exploits spray objects before allocating, so that they can make sure the object that can be overflowed is next to the object to be overflowed into)
+
+Actually such a goated article, its prob the best article I've read on buddy system and slab system, as its simple to understand, short, and teaches a lot of stuff.
+very cool.
+
+---------------------------------------------------------------------------------------
+
+ah so in other kernel challs, objects with similar size are all allocated in kmalloc-*, thats why its so easy
+to overlap objects after a UAF.
+but in this chall, a specific kmem_cache object is made to put castaway_cache objects, so you can only
+overwrite other castawat_cache objects with the overflow
+
+Im pretty sure this is where cross-cache overflows come in.
+
+(to determine the pagesperslab of a kmem_cache, does it see how many 0x1000 bytes is needed to make object 
+size be completely divisible? prob not?)
+
+
+cross-cache overflows
+----------------------
+Basically what the author did was
+
+1. spray a bunch of cred objects so that the cred_jar kmem_cache would have all its slabs filled, and will require an order-0 sized pages allocation when new cred_jar objects are allocated
+2. make a lot of order-0 sized pages by draining higher order pages into order 0 sized pages (through page spraying)
+3. free half of the order-0 sized pages and setting it up in the way so that the order-0 sized pages won't consolidate with its buddy
+   (so one buddy is used, one buddy is freed)
+4. spray cred objects so that the cred_jar kmem_cache will take order-0 sized pages from the buddy allocator
+   (so now one buddy is used (by page spraying), and another one is filled up by cred objects)
+5. free the other buddy
+   (so now one buddy is free, while the other is filled up by cred objects)
+6. spray the vulnerable object
+   (one buddy is filled with vuln object, other one is filled with cred objects)
+
+and now, a situation will arise where you can overflow the cred object using your vuln object
+
+(pages who are buddies are continuous in memory Im pretty quite very sure)
+
+
+This is the main gist of the exploit
+what's discussed then in the writeup is on step 2 (page spraying) and step 4 (cred objects spraying)
+
+Basically, you can only spray 50 pages using the vuln object, so a better page spraying primitive needs to be used
+The writeup used a primitive documented in a p0 writeup, which uses setsockopt to allocate and free order-0 pages
+
+You also can't really spray using like 512 byte kernel objects since when you want to free the page, even if you freed all your objects, there may be some other objects occupying the slab, making the page not free and returned to the buddy allocator
+
+
+And to spray cred objects, the process just has to fork / clone.
+But a lot of noise is created when a fork is called, and will cause a lot of the order-0 sized pages (which were meant for us to put the cred objects) to be taken away
+So the author then uses some specific flags to drastically reduce the noise
+
+only downside is that then all the child processes will share the same virtual memory
+So they can't rly write down if they succesfully priv escalated in memory, since then, all processes would think
+the priv escallation was succesful. And also memory overlapping would cause errors during func calls etc
+So they just had to use registers and assembly.
+
+(could they have just wrote the pid of the escalated one in memory? would be troublesome since can't use functions since can't use memory? idk)
+
+
+
+
+
+All right nice! That's pretty good.
+I think I can go back to reading the palindromatic writeup now
