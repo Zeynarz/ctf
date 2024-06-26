@@ -1,0 +1,47 @@
+you probably call the functions like
+
+{ "callNum": 3, "args": [{"type":...,"data":...}, {"type":...,"data":...}]}
+ptrs need to be encoded with b64 mcm
+
+in the python script, ints are just stored in args, and ptrs are dicts(with data and len as keys)
+
+
+
+
+
+the library functions:
+allocate: allocate a page, and store the address in the fds arr
+insert: copy from ptr to a chunk entry in arr
+
+
+so you probably just have to allocate a chunk, find out where user input is stored, write shellcode to the chunk, mprotect it, then execute it
+
+
+maybe can oob index access?
+
+make the memory we write to executable and execute it?
+
+need to debug the python process directly and not the shell process prob
+yup
+
+
+
+wait what, seems like input is directly written to page 0 and I can just execute it?
+
+
+cant write raw bytes, so just write ptrs and copy them?
+
+play around and observe bin to do this?
+symbols are still there, so use them to debug
+
+
+
+input
+chunk
+input
+chunk
+
+
+might have to use oob index
+
+WAY TOO OVERCOMPLICATED IT

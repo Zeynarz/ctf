@@ -1,0 +1,19 @@
+overwrite a value to 0x31337
+vuln @ 0x555555555916
+insert @ 0x55555555570c
+
+0x0000555555555580
+
+
+distance between base and target is 4096
+
+",0000\n=AAAA\n,1111\n=BBBB\n"
+
+this is how they store the keys and values
+
+so just send 4096-1-2- bytes, then send the vaule 
+
+
+key max 0x20 bytes, value max 0x80 bytes
+
+so send 0x20-2 bytes and 0x80-2 bytes, till hit 4096
