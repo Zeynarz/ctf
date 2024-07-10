@@ -1,0 +1,8 @@
+prob just a ptr leak into ret2libc
+need leak canary also, overwrite the null byte in canary with newline to leak
+
+
+read into 0x00007fffffffe210
+canary @ 0x00007fffffffe268
+ret @ 0x00007fffffffe278
+

@@ -1,0 +1,42 @@
+user is an object
+and user_list is linked list blocks used to make a link list
+
+aim is to set uid=0
+overwrite it? integer overflow it?
+
+
+vuln might be that it doesn't nullify 
+entry->next when you make an account
+
+so maybe you can make a fake user object with uid 0 and use entry->next to point to it
+
+and no need write into known memory
+I just have to point it to null memory
+since if its
+
+0x00000000
+0x00000000
+0x00000000
+
+then password and user is just null right
+
+
+this also works because size of user_entry is the same as user
+
+
+wait no I have to overwrite next with a user_list object
+I have to overwrite with a ptr that points to a ptr that points to 0x00000000
+
+found one:
+0x00000000004006e0 -> 0x0000000000403ff8 -> 0x0000000000000000
+
+it should work, since logging into an account doesn't make changes to the object
+so read only memory is fine
+
+nvm this doesnt work, password is a libc address, so got aslr
+
+
+
+0x0000000000402eb8│+0x27d8: 0x00000000004003d8
+0x4003d8:       0x0000000000000000      0x0000000000000000
+0x4003e8:       0x0000000000000000

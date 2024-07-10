@@ -1,0 +1,75 @@
+https://azeria-labs.com/arm-on-x86-qemu-user/
+https://blog.perfect.blue/ROPing-on-Aarch64
+https://ctftime.org/writeup/27929
+https://blog.ret2.io/2021/06/16/intro-to-pac-arm64/
+
+0x2f005500000a78
+0x5500000a78
+
+pretty sure no pie
+no aslr also
+
+there's a system("ls")
+idt u can overwrite the ls
+
+i think u just have to write a binsh somewhere, pop it into x0, and ret to system
+
+[] is also just dereference
+
+just use the stack to store values probably 
+rbp is stored, then ret is following it
+
+blr - call
+br - jmp
+
+
+paciza
+autiza
+
+how to you decode the paciza ptrs?
+retaa uses pointer authentication also
+
+key A and B are stored in process registers which are not accessible in usermode
+PAC means pointer authentication
+thats why its called pac shell
+
+i need to bypass the authentication through this https://blog.ret2.io/2021/06/16/intro-to-pac-arm64/?
+anyway else to get a shell?
+
+
+can bypass PAC by overwriting the array BUILTINS, and then calling help
+does context value matters? just try it out and see
+
+BUILTINS @ 0x5500012010
+got a new writable readable memory too
+
+
+context doesnt seem to matter
+
+
+
+so just use help to get the PAC'ed ptr, and then use that to call whatever I want
+can't call using the pacsh cause x0 will be affected
+
+have to find a gadget that pops into x0 and sets up x30
+
+
+could find gadgets in libc oh right
+
+
+0x000000000004a2b8 : ldr x0, [sp, #0x80] ; ldp x29, x30, [sp], #0xc0 ; ret
+
+this gadget is good, since it will access after main too if we use the call primitive to call this, and the stack after main wont be touched, so we can setup our stuff there
+
+libc base 0x5501870000
+
+   0x55018ba2cc:        ldr     x0, [sp, #128] // add then load to x0
+   0x55018ba2d0:        ldp     x29, x30, [sp], #192 // load then only add
+   0x55018ba2d4:        ret
+
+sp of main should never change
+
+
+own 0x5501821cf0 = server 0x5501821dd0
+
+c000000

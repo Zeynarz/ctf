@@ -1,0 +1,5 @@
+the buffer is right before a vector ptr
+buf @ 0x4051e0
+
+
+the vectors prob work by having a start and end ptr to the side
