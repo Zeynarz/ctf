@@ -1,0 +1,25 @@
+name @ 0x00007fffffffe1b0
+ret @ 0x00007fffffffe258
+
+there's null byte overflows on both reads
+the useful one is in get_name, since it can null byte a saved rbp address
+messing up the rbp value in main, and thus messing up where the ret address is stored
+
+there's a chance where the main rbp gets written into where name is
+so u'll have control over ret address there
+
+
+next question is what to do after gaining ret
+can scanf read in null bytes?
+yes it can wow nice, makes life a lot easier
+
+the large message buf could be used to setup a stack pivot
+
+have to leak libc, read in bytes, and ret2libc
+or we can just leak libc and restart the binary and ret2libc there
+
+rdi is perfectly set up to 
+$rdi   : 0x00007fffffffbf70  →  0x00007ffff7de9050  →  <funlockfile+0> endbr64
+during the ret, 
+
+so easy libc leak there

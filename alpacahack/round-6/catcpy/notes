@@ -1,0 +1,27 @@
+feel like its gonna be smthg like filling the buffer completely, making the strcpy copy the
+bytes after the buffer
+
+wait no u can easily overflow the buffer using strcat lol
+
+
+there's a couple of prev bytes remaining after the concat to overwrite ret
+0x00007ffd9b93e778│+0x0008: 0x00007f2300401256
+
+prob can solve this by just concatonating a few null bytes
+
+0x00007fffffffe2a0│+0x0000: 0x4242424242424242
+0x00007fffffffe2a8│+0x0008: 0x0000000242424242
+0x00007fffffffe2b0│+0x0010: 0x4242424242424242
+0x00007fffffffe2b8│+0x0018: 0x0000155500401256
+
+
+0x00007fffffffe2a8│+0x0008: 0x0000000242424242 is edited before strcat is called, 
+so thats why got null bytes there
+
+
+oh what i have to do is slowly clear out the prev ret address with null bytes
+so if
+ret: 0x00007ffff7db0d90
+i have to clear 7f first, then ff, then just put the real ret address
+
+

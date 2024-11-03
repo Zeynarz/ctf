@@ -1,0 +1,108 @@
+there's a vuln in get_index
+idx 0-16 works, so we can allocate 17 chunks
+
+using idx 16, we can overwrite the last two bytes of chunk 0 ptr
+
+0x555555558040 <size_list>:     0x0000000000000010      0x0000000000000000
+0x555555558050: 0x0000000000000000      0x0000000000000000
+0x555555558060 <note_list>:     0x0000555555550041      0x0000000000000000
+
+1/16 chance of getting 0000 for last two bytes of heap tho
+
+
+probably can do a tcache poisoning attack here
+need to:
+- leak heap
+- leak libc? using unsorted bin?
+- overwrite fd ptr to exit funcs?
+
+how are we gonna get code execution?
+exit funcs or stack
+
+
+0x555555558060 <note_list>:     0x0000000000000000      0x0000000000000000
+0x555555558070 <note_list+16>:  0x0000000000000000      0x0000000000000000
+0x555555558080 <note_list+32>:  0x0000000000000000      0x0000000000000000
+0x555555558090 <note_list+48>:  0x0000000000000000      0x0000000000000000
+0x5555555580a0: 0x00000000000011d0      0x0000000000000000
+0x5555555580b0: 0x0009000200000020      0x0000000000001200
+0x5555555580c0: 0x0000000000000000      0x0009000200000033
+0x5555555580d0: 0x0000000000001240      0x0000000000000000
+0x5555555580e0: 0x0013000100000049
+
+there is noise in a lot of these chunks, so can't use them
+slot 16 in used after I linked the provided libc 
+so can't use this vuln
+
+only: 9,12,15 can be used
+
+
+wait on remote index 16 could be used
+this is some local setup problem
+
+wait if we can execute a tcache poisoning, just overwrite note_list
+from there we have very powerful arbitary reads and writes
+
+
+wait im dumb
+i can just allocate a chunk at index 16 first,
+then allocate a chunk at index 0, which will overwrite size of idx 16
+and now i have an overflow
+lol
+
+but we have no pie leak tho
+
+
+i think we still have to leak libc, then tcache overwrite to overwrite fs_base
+and then use another tcache overwrite to overwrite exit handlers
+
+
+
+
+
+
+
+0x1555552db740: 0x00001555552db740      0x00001555552dc160
+0x1555552db750: 0x00001555552db740      0x0000000000000000
+0x1555552db760: 0x0000000000000000      0xfa976ffd26c44000
+0x1555552db770: 0x62997d3b87c25b4d      0x0000000000000000
+
+
+0x00001555552db000 0x00001555552de000 0x0000000000000000 rw-
+0x00001555552de000 0x0000155555306000 0x0000000000000000 r-- /usr/lib/x86_64-linux-gnu/libc.so.6
+
+
+
+exploit works depending on how big of an overflow I get, which depends on the address at index 0
+so its by chance also
+
+
+
+0x555555559290: 0x0000000000000000      0x0000000000000021
+0x5555555592a0: 0x0000000000000000      0x0000000000000000
+0x5555555592b0: 0x0000000000000000      0x0000000000000021
+0x5555555592c0: 0x0000000000000000      0x0000000000000000
+0x5555555592d0: 0x0000000000000000      0x0000000000000021
+0x5555555592e0: 0x000055500000c659      0xf93c5edd86f051f7
+0x5555555592f0: 0x0000000000000000      0x0000000000000021
+0x555555559300: 0x0000000555555559      0xf93c5edd86f051f7
+0x555555559310: 0x0000000000000000      0x0000000000000031
+0x555555559320: 0x000055500000c609      0xf93c5edd86f051f7
+0x555555559330: 0x0000000000000000      0x0000000000000000
+0x555555559340: 0x0000000000000000      0x0000000000000031
+0x555555559350: 0x0000000555555559      0xf93c5edd86f051f7
+0x555555559360: 0x0000000000000000      0x0000000000000000
+
+
+
+0x1555554f9f00 <initial>:       0x0000000000000000      0x0000000000000001
+0x1555554f9f10 <initial+16>:    0x0000000000000004      0xd5097384c87a9294
+0x1555554f9f20 <initial+32>:    0x0000000000000000      0x0000000000000000
+
+
+
+will messing up the stack canary in tls mess up my exploit?
+
+
+wait nvm tcache doesnt set size when allocated
+i can just allocate directly at the pointer guard
